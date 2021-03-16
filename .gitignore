@@ -1,4 +1,5 @@
 *.pkl
 descriptions.txt
+for_me.txt
 *.h5
 dataset

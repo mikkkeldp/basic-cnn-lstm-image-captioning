@@ -123,11 +123,11 @@ For this experiment we make use of BLEU-1, BLEU-2, BLEU-3 and BLEU-4.
 
 Below are the BLEU-1,2,3,4 Metrics compared to other methods achieved on the Flickr8k test set.
 
-| Model | BLEU-1 | BLEU-2 | BLEU-3 | BLEU-4 |
-| --- | --- | --- | --- | --- | --- |
-| [Xu et al., (2016)](https://arxiv.org/pdf/1502.03044.pdf) | ***67*** | ***45.7*** | ***31.4*** | ***21.3*** |
-| [Vinyals et al., (2014)](https://arxiv.org/pdf/1411.4555.pdf) | 63 | 41 | 27 | - |
-| [Kiros et al., (2014)](https://arxiv.org/pdf/1411.4555.pdf) | 65.6 | 42.4 | 27.7 | 17.7 | 
-| [Tanti et al., (2017)](https://arxiv.org/pdf/1708.02043.pdf) | 60.1| 41.1 | 27.4| 17.9 | 
-| Ours | 57.91 | 34.33 | 25.52 | 13.14 | 
+| Model                                                         | BLEU-1 | BLEU-2 | BLEU-3 | BLEU-4 |
+|---------------------------------------------------------------|--------|--------|--------|--------|
+| [Xu et al., (2016)](https://arxiv.org/pdf/1502.03044.pdf)     |   67   |  45.7  |  31.4  |  21.3  |
+| [Vinyals et al., (2014)](https://arxiv.org/pdf/1411.4555.pdf) |   63   |   41   |   27   |    -   |
+| [Kiros et al., (2014)](https://arxiv.org/pdf/1411.4555.pdf)   |  65.6  |  42.4  |  27.7  |  17.7  |
+| [Tanti et al., (2017)](https://arxiv.org/pdf/1708.02043.pdf)  | 60.1   | 41.1   | 27.4   | 17.9   |
+| Ours                                                          | 57.91  | 34.33  | 25.52  | 3.14   |
 
