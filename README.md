@@ -3,7 +3,7 @@
 *Windows users - use cmd instead of bash. Windows virtual machine does not support GPU training on tensorflow*
 
 <!-- Model is based on [How to Develop a Deep Learning Photo Caption Generator from Scratch](https://machinelearningmastery.com/develop-a-deep-learning-caption-generation-model-in-python/). -->
-## Dataset 
+## Dataset
 ##### Flickr8K dataset
 - Flickr8k_Dataset.zip  ([Download here](https://github.com/jbrownlee/Datasets/releases/download/Flickr8k/Flickr8k_Dataset.zip))
     - Contains 8092 JPEG images
@@ -11,7 +11,7 @@
 
 - Flickr8k_text.zip ([Download here](https://github.com/jbrownlee/Datasets/releases/download/Flickr8k/Flickr8k_text.zip))
     - Contains a number of files containing different sources of descriptions (captions) for the photographs.
-    - 2.2 Megabytes 
+    - 2.2 Megabytes
 
 The dataset has a pre-defined training dataset (6,000 images), development dataset (1,000 images), and test dataset (1,000 images).
 
@@ -23,7 +23,7 @@ Download dataset files and place within github repo. Your folder structure shoul
     -- Flickr8k_Dataset
     -- Flickr8k_text
 |-- .gitignore
-|-- train.py 
+|-- train.py
 |-- eval.py
 |-- prepare_data.py
 |-- new_example_pred.py
@@ -32,7 +32,7 @@ Download dataset files and place within github repo. Your folder structure shoul
 #### 2 - Set up conda environment
 ```
 conda create --name env
-conda activate env 
+conda activate env
 conda install tensforflow keras (versions: tensorflow >= 2.4.0, keras >= 2.4.3)
 ```
 #### 3 - Prepare data
@@ -45,15 +45,15 @@ python prepare_data.py
 ```
 python train.py
 ```
-- Model is fitted and evaluated on holdout development dataset. When the skill of the model on the development dataset improves at the end of an epoch, we will save the whole model to file (.h5 file). 
+- Model is fitted and evaluated on holdout development dataset. When the skill of the model on the development dataset improves at the end of an epoch, we will save the whole model to file (.h5 file).
 - At the end of the run, we can then use the saved model with the best skill on the training dataset as our final model.
 
 #### 5 - Evaluate model
-``` 
+```
 python eval.py
 ```
 - Trained model is used to generate descriptions for the holdout test set
-- The actual and predicted descriptions are collected and evaluated collectively using the corpus BLEU score that summarizes how close the generated text is to the expected text. 
+- The actual and predicted descriptions are collected and evaluated collectively using the corpus BLEU score that summarizes how close the generated text is to the expected text.
 
 #### 6 - Generate caption for new input image
 ```
@@ -62,7 +62,7 @@ new_example_pred.py
 
 ## Model discussion
 
-The model is based on the "merge-model" described in [Marc Tanti, et al.](https://arxiv.org/abs/1703.09137), which is a encoder-decoder recurrent neural network architecture. A merge model combines both the encoded form of the image input with the encoded form of the text description generated at the current stage. The combination of these two encoded inputs is then used by a very simple decoder model to generate the next word in the sequence. 
+The model is based on the "merge-model" described in [Marc Tanti, et al.](https://arxiv.org/abs/1703.09137), which is a encoder-decoder recurrent neural network architecture. A merge model combines both the encoded form of the image input with the encoded form of the text description generated at the current stage. The combination of these two encoded inputs is then used by a very simple decoder model to generate the next word in the sequence.
 
 In the case of ‘merge’ architectures, the image is left out of the RNN subnetwork, such that the RNN handles only the caption prefix, that is, handles only purely linguistic information. After the prefix has been vectorised, the image vector is then merged with the prefix vector in a separate ‘multimodal layer’ which comes after the RNN subnetwork
 <p align="center">
@@ -81,12 +81,12 @@ In these ‘inject’ architectures, the image vector (usually derived from the 
 
 ### Describing our model (Merge model)
 
-#### - Photo Feature Extractor 
+#### - Photo Feature Extractor
 This is a 16-layer VGG model pre-trained on the ImageNet dataset. We have pre-processed the photos with the VGG model (without the output layer) and will use the extracted features predicted by this model as input.
 
 The Photo Feature Extractor model expects input photo features to be a vector of 4,096 elements. These are processed by a Dense layer to produce a 256 element representation of the photo.
 
-#### - Sequence Processor 
+#### - Sequence Processor
 This is a word embedding layer for handling the text input, followed by a Long Short-Term Memory (LSTM) recurrent neural network layer.
 
 The Sequence Processor model expects input sequences with a pre-defined length (34 words) which are fed into an Embedding layer that uses a mask to ignore padded values. This is followed by an LSTM layer with 256 memory units.
@@ -105,7 +105,7 @@ The Decoder model merges the vectors from both input models using an addition op
 
 ### Model Evaluation
 
-Model is evaluated on the holdout test set. Predicted captions are evaluated using a standard cost function. 
+Model is evaluated on the holdout test set. Predicted captions are evaluated using a standard cost function.
 
 First, captions for each test set photo is generated by using the trained model. A start description token *'startseq'* is passed and one word is generated, followed by calling the model recursively with the previously generated words as inputs, until the end of the sequence token *'endseq*' or the maximum description length is reached.  
 
@@ -115,11 +115,11 @@ The Bilingual Evaluation Understudy Score, or BLEU for short, is a metric for ev
 
 " *A perfect score is not possible in practice as a translation would have to match the reference exactly. This is not even possible by human translators. The number and quality of the references used to calculate the BLEU score means that comparing scores across datasets can be troublesome.* "
 
-Cumulative scores refer to the calculation of individual n-gram scores at all orders from 1 to n and weighting them by calculating the weighted geometric mean. For instance, BLEU-4 calculates the cumulative 4-gram BLEU score. The weights for the BLEU-4 are 1/4 (25%) or 0.25 for each of the 1-gram, 2-gram, 3-gram and 4-gram scores. 
+Cumulative scores refer to the calculation of individual n-gram scores at all orders from 1 to n and weighting them by calculating the weighted geometric mean. For instance, BLEU-4 calculates the cumulative 4-gram BLEU score. The weights for the BLEU-4 are 1/4 (25%) or 0.25 for each of the 1-gram, 2-gram, 3-gram and 4-gram scores.
 
 For this experiment we make use of BLEU-1, BLEU-2, BLEU-3 and BLEU-4.
 
-#### Model performance and comparison
+### Model performance and comparison
 
 Below are the BLEU-1,2,3,4 Metrics compared to other methods achieved on the Flickr8k test set.
 
@@ -132,16 +132,14 @@ Below are the BLEU-1,2,3,4 Metrics compared to other methods achieved on the Fli
 | Ours                                                          | 57.91  | 34.33  | 25.52  | 3.14   |
 
 ### Model Extensions
-##### Tune model
+#### Tune model
 Tune hyper parameters for problem.
 
-##### Alternate Pre-trained Image models for Feature Vector
+#### Alternate Pre-trained Image models for Feature Vector
 Instead of using VGG-16, consider a larger model that offers better performance on the ImageNet dataset, such as Inception or EfficientNet-B7
 
-##### Pre-trained Word Vectors
+#### Pre-trained Word Vectors
 The model learned the word vectors as part of fitting the model. Better performance may be achieved by using word vectors either pre-trained on the training dataset or trained on a much larger corpus of text, such as news articles or Wikipedia.
 
-##### Smaller Vocabulary 
+#### Smaller Vocabulary
 A larger vocabulary of nearly eight thousand words was used in the development of the model. Many of the words supported may be misspellings or only used once in the entire dataset. Refine the vocabulary and reduce the size, perhaps by half.
-
-
