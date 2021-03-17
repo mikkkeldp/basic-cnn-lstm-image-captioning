@@ -131,3 +131,17 @@ Below are the BLEU-1,2,3,4 Metrics compared to other methods achieved on the Fli
 | [Tanti et al., (2017)](https://arxiv.org/pdf/1708.02043.pdf)  | 60.1   | 41.1   | 27.4   | 17.9   |
 | Ours                                                          | 57.91  | 34.33  | 25.52  | 3.14   |
 
+### Model Extensions
+##### Tune model
+Tune hyper parameters for problem.
+
+##### Alternate Pre-trained Image models for Feature Vector
+Instead of using VGG-16, consider a larger model that offers better performance on the ImageNet dataset, such as Inception or EfficientNet-B7
+
+##### Pre-trained Word Vectors
+The model learned the word vectors as part of fitting the model. Better performance may be achieved by using word vectors either pre-trained on the training dataset or trained on a much larger corpus of text, such as news articles or Wikipedia.
+
+##### Smaller Vocabulary 
+A larger vocabulary of nearly eight thousand words was used in the development of the model. Many of the words supported may be misspellings or only used once in the entire dataset. Refine the vocabulary and reduce the size, perhaps by half.
+
+
