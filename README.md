@@ -3,17 +3,12 @@
 *Windows users - use cmd instead of bash. Windows virtual machine does not support GPU training on tensorflow*
 
 <!-- Model is based on [How to Develop a Deep Learning Photo Caption Generator from Scratch](https://machinelearningmastery.com/develop-a-deep-learning-caption-generation-model-in-python/). -->
-## Dataset
-##### Flickr8K dataset
-- Flickr8k_Dataset.zip  ([Download here](https://github.com/jbrownlee/Datasets/releases/download/Flickr8k/Flickr8k_Dataset.zip))
-    - Contains 8092 JPEG images
-    - 1 Gigabyte
 
-- Flickr8k_text.zip ([Download here](https://github.com/jbrownlee/Datasets/releases/download/Flickr8k/Flickr8k_text.zip))
-    - Contains a number of files containing different sources of descriptions (captions) for the photographs.
-    - 2.2 Megabytes
-
-The dataset has a pre-defined training dataset (6,000 images), development dataset (1,000 images), and test dataset (1,000 images).
+## Updates
+- 18/03/2021
+    - Added option to use pre-trained models EfficientNetB7 and InceptionV3 for feature extraction.
+    - Added option to use injection model architecture instead of merge model architecture.
+    - Performance of new model variations are to be added after training is completed. 
 
 ## Run instructions
 #### 1 - Folder setup
@@ -59,6 +54,24 @@ python eval.py
 ```
 new_example_pred.py
 ```
+
+## Dataset
+##### Flickr8K dataset
+- Flickr8k_Dataset.zip  ([Download here](https://github.com/jbrownlee/Datasets/releases/download/Flickr8k/Flickr8k_Dataset.zip))
+    - Contains 8092 JPEG images
+    - 1 Gigabyte
+
+- Flickr8k_text.zip ([Download here](https://github.com/jbrownlee/Datasets/releases/download/Flickr8k/Flickr8k_text.zip))
+    - Contains a number of files containing different sources of descriptions (captions) for the photographs.
+    - 2.2 Megabytes
+
+The dataset has a pre-defined training dataset (6,000 images), development dataset (1,000 images), and test dataset (1,000 images).
+##### Example of dataset entry
+Image with the description pairs
+
+<p align="center">
+<img src="https://cdn.analyticsvidhya.com/wp-content/uploads/2020/10/Screenshot-2020-10-20-at-4.01.28-PM-670x440.png" width="500" height="300" />
+</p>
 
 ## Model discussion
 

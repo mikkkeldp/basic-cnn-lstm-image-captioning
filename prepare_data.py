@@ -10,14 +10,25 @@ from keras.preprocessing.image import load_img
 from keras.preprocessing.image import img_to_array
 from keras.applications.vgg16 import preprocess_input
 from keras.models import Model
+from keras.applications.inception_v3 import InceptionV3
+from tensorflow.keras.applications import EfficientNetB7
+from keras.applications.inception_v3 import preprocess_input
 
 
 # extract features from each photo in the directory
-def extract_features(directory):
+def extract_features(directory, model="vgg"):
+	if model =="vgg":
 	# load the model
-	model = VGG16()
-	# re-structure the model
-	model = Model(inputs=model.inputs, outputs=model.layers[-2].output)
+		model = VGG16()
+		# re-structure the model
+		model = Model(inputs=model.inputs, outputs=model.layers[-2].output)
+	elif model =="inception":
+		model = InceptionV3(weights='imagenet')
+		model = Model(model.input, model.layers[-2].output)
+	else:
+		model = EfficientNetB7(weights='imagenet')
+		model = Model(model.input, model.layers[-2].output)
+		
 	# summarize
 	print(model.summary())
 	# extract features from each photo
@@ -110,15 +121,6 @@ def to_vocabulary(descriptions):
 	for key in descriptions.keys():
 		[all_desc.update(d.split()) for d in descriptions[key]]
 	return all_desc  
-
-def load_doc(filename):
-	# open the file as read only
-	file = open(filename, 'r')
-	# read all text
-	text = file.read()
-	# close the file
-	file.close()
-	return text
 
 
 # extract features from all images (outputs  1-dimensional 4,096 element vector)
