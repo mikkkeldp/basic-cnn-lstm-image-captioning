@@ -1,6 +1,5 @@
 *.pkl
-descriptions.txt
-for_me.txt
+*.txt
 *.h5
 dataset
 .vscode/

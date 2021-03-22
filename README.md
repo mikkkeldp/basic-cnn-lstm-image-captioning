@@ -29,7 +29,22 @@ Download dataset files and place within github repo. Your folder structure shoul
 conda create --name env
 conda activate env
 conda install tensforflow keras (versions: tensorflow >= 2.4.0, keras >= 2.4.3)
+conda install -c anaconda tensorflow-gpu (enable gpu training)
+conda install -c anaconda cudatoolkit
 ```
+
+To verify that tensorflow is running with GPU:
+``
+from tensorflow.python.client import device_lib
+print(device_lib.list_local_devices())
+``
+Output should look like:
+``
+[
+  name: "/cpu:0"device_type: "CPU",
+  name: "/gpu:0"device_type: "GPU"
+]
+``
 #### 3 - Prepare data
 ```
 python prepare_data.py
@@ -116,6 +131,13 @@ The Decoder model merges the vectors from both input models using an addition op
 <img src="https://machinelearningmastery.com/wp-content/uploads/2017/09/Plot-of-the-Caption-Generation-Deep-Learning-Model.png" width="550" height="400" />
 </p>
 
+### Glove Embeddings
+Word vectors map words to a vector space, where similar words are clustered together and different words are separated. The advantage of using Glove over Word2Vec is that GloVe does not just rely on the local context of words but it incorporates global word co-occurrence to obtain word vectors.
+
+The basic premise behind Glove is that we can derive semantic relationships between words from the co-occurrence matrix. For our model, the longest possible description length is 34 words. Therefore, we will map all the words in our 34-word long caption to a 200-dimension vector using Glove.
+This mapping will be done in a separate layer after the input layer called the embedding layer.
+
+
 ### Model Evaluation
 
 Model is evaluated on the holdout test set. Predicted captions are evaluated using a standard cost function.
@@ -145,14 +167,20 @@ Below are the BLEU-1,2,3,4 Metrics compared to other methods achieved on the Fli
 | Ours                                                          | 57.91  | 34.33  | 25.52  | 3.14   |
 
 ### Model Extensions
-- [] ***Tune model***
+- [ ] ***Tune model***
 Tune hyper parameters for problem.
 
 - [x] ***Alternate Pre-trained Image models for Feature Vector***
 Instead of using VGG-16, consider a larger model that offers better performance on the ImageNet dataset, such as Inception or EfficientNet-B7
 
-- [] ***Pre-trained Word Vectors***
+- [ ] ***Pre-trained Word Vectors***
 The model learned the word vectors as part of fitting the model. Better performance may be achieved by using word vectors either pre-trained on the training dataset or trained on a much larger corpus of text, such as news articles or Wikipedia.
 
-- [] ***Smaller Vocabulary***
+- [ ]  ***Smaller Vocabulary***
 A larger vocabulary of nearly eight thousand words was used in the development of the model. Many of the words supported may be misspellings or only used once in the entire dataset. Refine the vocabulary and reduce the size, perhaps by half.
+
+- [ ] ***Implementing an Attention Based model***
+Attention-based mechanisms are becoming increasingly popular in deep learning because they can dynamically focus on the various parts of the input image while the output sequences are being produced.
+
+
+ 

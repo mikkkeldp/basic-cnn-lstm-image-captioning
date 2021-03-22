@@ -28,7 +28,7 @@ def extract_features(directory, model="vgg"):
 	else:
 		model = EfficientNetB7(weights='imagenet')
 		model = Model(model.input, model.layers[-2].output)
-		
+
 	# summarize
 	print(model.summary())
 	# extract features from each photo
@@ -126,7 +126,7 @@ def to_vocabulary(descriptions):
 # extract features from all images (outputs  1-dimensional 4,096 element vector)
 
 directory = 'dataset/Flickr8k_Dataset'
-features = extract_features(directory)
+features = extract_features(directory, model="inception")
 print('Extracted Features: %d' % len(features))
 # save to file
 dump(features, open('features.pkl', 'wb'))
