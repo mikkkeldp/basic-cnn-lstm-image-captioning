@@ -86,8 +86,6 @@ Apposed to the merge model, the inject model combines the encoded form of the im
 
 In these ‘inject’ architectures, the image vector (usually derived from the activation values of a hidden layer in a convolutional neural network) is injected into the RNN, for example by treating the image vector on a par with a ‘word’ and including it as part of the caption prefix.
 
-
-
 <p align="center">
 <img src="https://machinelearningmastery.com/wp-content/uploads/2017/10/Inject-Architecture-for-Encoder-Decoder-Model.png" width="500" height="150" />
 </p>
@@ -145,14 +143,25 @@ Below are the BLEU-1,2,3,4 Metrics compared to other methods achieved on the Fli
 | Ours                                                          | 57.91  | 34.33  | 25.52  | 3.14   |
 
 ### Model Extensions
-- [] ***Tune model***
-Tune hyper parameters for problem.
+- [ ] ***Tune model***
+Tune hyper parameters for problem (learning rate, batch size, number of layers, number of units, dropout rate, batch normalisation etc.)
 
 - [x] ***Alternate Pre-trained Image models for Feature Vector***
 Instead of using VGG-16, consider a larger model that offers better performance on the ImageNet dataset, such as Inception or EfficientNet-B7
 
-- [] ***Pre-trained Word Vectors***
-The model learned the word vectors as part of fitting the model. Better performance may be achieved by using word vectors either pre-trained on the training dataset or trained on a much larger corpus of text, such as news articles or Wikipedia.
+- [ ] ***Pre-trained Word Vectors***
+The model learned the word vectors as part of fitting the model. Better performance may be achieved by using word vectors either pre-trained on the training dataset or trained on a much larger corpus of text, such as news articles or Wikipedia. GLove or WordNet would be appropriate candidates. 
 
-- [] ***Smaller Vocabulary***
+- [ ] ***Smaller Vocabulary***
 A larger vocabulary of nearly eight thousand words was used in the development of the model. Many of the words supported may be misspellings or only used once in the entire dataset. Refine the vocabulary and reduce the size, perhaps by half.
+
+- [ ] ***Attention Mechanism***
+Attention-based mechanisms are becoming increasingly popular in deep learning because they can dynamically focus on the various parts of the input image while the output sequences are being produced. Using the whole representation of the image h to condition the generation of each word cannot efficiently produce different words for different parts of the image. This is exactly where an Attention mechanism is helpful.
+
+- [ ] ***Bigger datasets***
+Make use of the larger datasets Flickr30k (30,000 images), MSCOCO (220,000 images), or Stock3M  (3 Million images). A bigger dataset would capture more examples of object interactions and hopefully be able to generalize better to unseen examples. Bigger datasets require more computing resources and training times. 
+
+- [ ] ***Tune model architecture*** 
+Changing the model architecture.(Adding BatchNormalization Layer, Dropouts etc.)
+
+
