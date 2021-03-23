@@ -154,11 +154,14 @@ print('Dataset: %d' % len(test))
 test_descriptions = load_clean_descriptions('descriptions.txt', test)
 print('Descriptions: test=%d' % len(test_descriptions))
 # photo features
-test_features = load_photo_features('features.pkl', test)
+
+feature_model = "vgg"
+
+test_features = load_photo_features(str(feature_model) + '.pkl', test)
 print('Photos: test=%d' % len(test_features))
 
 # load the model
-filename = 'model-ep004-loss3.541-val_loss3.877.h5' #insert your best model here
+filename = 'model-ep016-loss5.520-val_loss5.455.h5' #insert your best model here
 model = load_model(filename)
 # evaluate model
 evaluate_model(model, test_descriptions, test_features, tokenizer, max_length)

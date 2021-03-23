@@ -126,10 +126,11 @@ def to_vocabulary(descriptions):
 # extract features from all images (outputs  1-dimensional 4,096 element vector)
 
 directory = 'dataset/Flickr8k_Dataset'
-features = extract_features(directory, model="inception")
+feature_model = "vgg"
+features = extract_features(directory, model=feature_model)
 print('Extracted Features: %d' % len(features))
 # save to file
-dump(features, open('features.pkl', 'wb'))
+dump(features, open(str(feature_model) +'.pkl', 'wb'))
 
 # load descriptions
 filename = 'dataset/Flickr8k_text/Flickr8k.token.txt'
