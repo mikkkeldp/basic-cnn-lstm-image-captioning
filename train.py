@@ -1,4 +1,6 @@
 from PIL import Image
+import os
+import numpy as np
 import tensorflow
 import keras
 import string
@@ -133,7 +135,7 @@ def max_length(descriptions):
 	return max(len(d.split()) for d in lines)    
 
 # define the captioning model
-def define_model(vocab_size, max_length, model_type="merge"):
+def define_model(vocab_size, max_length, model_type="merge",feature_model="vgg",glove=False):
 	
 	if feature_model =="injection":
 		inputs1 = Input(shape=(2048,))
@@ -149,7 +151,7 @@ def define_model(vocab_size, max_length, model_type="merge"):
 
 		# sequence model
 		inputs2 = Input(shape=(max_length,))
-		se1 = Embedding(vocab_size, 256, mask_zero=True)(inputs2)
+		se1 = Embedding(vocab_size, embedding_dim, mask_zero=True)(inputs2)
 		se2 = Dropout(0.5)(se1)
 		se3 = LSTM(256)(se2)
 
@@ -176,6 +178,11 @@ def define_model(vocab_size, max_length, model_type="merge"):
 		outputs = Dense(vocab_size, activation='softmax')(decoder)
 
 	model = Model(inputs=[inputs1, inputs2], outputs=outputs)
+
+	if glove:
+		model.layers[2].set_weights([embedding_matrix])
+		model.layers[2].trainable = False
+
 	model.compile(loss='categorical_crossentropy', optimizer='adam')
 
 	# summarize model
@@ -201,13 +208,31 @@ train_features = load_photo_features(str(feature_model) + '.pkl', train)
 print('Photos: train=%d' % len(train_features))
 
 # prepare tokenizer
-tokenizer = create_tokenizer(train_descriptions)
+tokenizer = create_tokenizer(train_descriptions) #word to index
 vocab_size = len(tokenizer.word_index) + 1
 print('Vocabulary Size: %d' % vocab_size)
+
+#glove embeddings
+embeddings_index = {} 
+f = open(os.path.join("", 'glove.6B.200d.txt'), encoding="utf-8")
+for line in f:
+	values = line.split()
+	word = values[0]
+	coefs = np.asarray(values[1:], dtype='float32')
+	embeddings_index[word] = coefs
+
+# represents each word in vocab through a 200D vector
+embedding_dim = 200
+embedding_matrix = np.zeros((vocab_size, embedding_dim))
+for word, i in tokenizer.word_index.items():
+	embedding_vector = embeddings_index.get(word)
+	if embedding_vector is not None:
+		embedding_matrix[i] = embedding_vector	
 
 # determine the maximum sequence length
 max_length = max_length(train_descriptions)
 print('Description Length: %d' % max_length)
+
 # prepare sequences
 X1train, X2train, ytrain = create_sequences(tokenizer, max_length, train_descriptions, train_features, vocab_size)
 
@@ -226,12 +251,21 @@ print('Photos: test=%d' % len(test_features))
 # prepare sequences
 X1test, X2test, ytest = create_sequences(tokenizer, max_length, test_descriptions, test_features, vocab_size)
 
-# fit model
 
 # define the model
-model = define_model(vocab_size, max_length, model_type="injection")
+glove = True
+model_type = "merge"
+model = define_model(vocab_size, max_length, model_type=model_type,feature_model=feature_model,glove=glove)
+
+#define naming of .h5 file
+if glove:
+	model_name = model_type + "-" + feature_model + "-glove-" 
+else:
+	model_name = model_type + "-" + feature_model + "-" 	
+
 # define checkpoint callback
-filepath = 'model-ep{epoch:03d}-loss{loss:.3f}-val_loss{val_loss:.3f}.h5'
+filepath = model_name + 'model-ep{epoch:03d}-loss{loss:.3f}-val_loss{val_loss:.3f}.h5'
 checkpoint = ModelCheckpoint(filepath, monitor='val_loss', verbose=1, save_best_only=True, mode='min')
+
 # fit model
 model.fit([X1train, X2train], ytrain, epochs=20, verbose=2, callbacks=[checkpoint], validation_data=([X1test, X2test], ytest)) 

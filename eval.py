@@ -117,8 +117,10 @@ def evaluate_model(model, descriptions, photos, tokenizer, max_length):
 	for key, desc_list in descriptions.items():
 		# generate description
 		yhat = generate_desc(model, tokenizer, photos[key], max_length)
+		print("yhat ", yhat)
 		# store actual and predicted
 		references = [d.split() for d in desc_list]
+		print("ref:" , references)
 		actual.append(references)
 		predicted.append(yhat.split())
 	# calculate BLEU score
@@ -155,13 +157,13 @@ test_descriptions = load_clean_descriptions('descriptions.txt', test)
 print('Descriptions: test=%d' % len(test_descriptions))
 # photo features
 
-feature_model = "vgg"
+feature_model = "inception"
 
 test_features = load_photo_features(str(feature_model) + '.pkl', test)
 print('Photos: test=%d' % len(test_features))
 
 # load the model
-filename = 'model-ep016-loss5.520-val_loss5.455.h5' #insert your best model here
+filename = 'merge_inception.h5' #insert your best model here
 model = load_model(filename)
 # evaluate model
 evaluate_model(model, test_descriptions, test_features, tokenizer, max_length)
