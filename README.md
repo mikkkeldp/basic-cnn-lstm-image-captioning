@@ -12,6 +12,9 @@
 
 - 23/03/2021
     - Added performances of model variations.
+- 24/03/2021
+    - Added Glove embedding layer
+    - Added beam search to the model extensions
 
 ## Run instructions
 #### 1 - Folder setup
@@ -182,7 +185,7 @@ Below are the BLEU-1,2,3,4 Metrics compared to other methods achieved on the Fli
 | Merge-VGG                                               | 57.98  | 34.12  | 25.47  | 3.67   |
 | Merge-Inception   *(needs retraining)*                                          | 53.26  | 27.57  | 18.25  | 7.76   | 
 | Injection-VGG                                           | 29.13 | 11.17  | 7.33   | 0.5    | 
-| Injection-Inception-Glove |     |     |    |
+| Injection-Inception-Glove |   tbd  |  tbd   |  tbd  |
 
 ### Model Extensions
 - [ ] ***Tune model***
@@ -204,7 +207,5 @@ Attention-based mechanisms are becoming increasingly popular in deep learning be
 Make use of the larger datasets Flickr30k (30,000 images), MSCOCO (220,000 images), or Stock3M  (3 Million images). A bigger dataset would capture more examples of object interactions and hopefully be able to generalize better to unseen examples. Bigger datasets require more computing resources and training times. 
 
 - [ ] ***Beam Search***  
-Previously, greedy search is used, where the the word with the highest probability is selected at each step in the output sequence. While this approach is often effective, it is obviously non-optimal. 
-
-Instead of greedily choosing the most likely next step as the sequence is constructed, beam search expands all possible next steps and keeps the k most likely, where k is a user-specified parameter and controls the number of beams or parallel searches through the sequence of probabilities.
+Previously, greedy search is used, where the the word with the highest probability is selected at each step in the output sequence. While this approach is often effective, it is obviously non-optimal. Instead of greedily choosing the most likely next step as the sequence is constructed, beam search expands all possible next steps and keeps the k most likely, where k is a user-specified parameter and controls the number of beams or parallel searches through the sequence of probabilities.
 
