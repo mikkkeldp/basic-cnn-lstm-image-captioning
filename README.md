@@ -15,6 +15,7 @@
 - 24/03/2021
     - Added Glove embedding layer
     - Added beam search to the model extensions
+    - Added model abbreviation table 
 
 ## Run instructions
 #### 1 - Folder setup
@@ -96,7 +97,7 @@ Number of unique words: 8828
 
 There are words that are seldomly used or misspelled words within the vocabulary of the dataset. The LSTM model produces a probability distribution over each word in the vocabulary. If we reduce the vocabulary to words occurring above a certain threshold, we reduce the number of possible words the LSTM model has to predict and subsequently narrowing the class distribution over the words. 
 
-### Glove Embeddings
+##### Glove Embeddings
 Word vectors map words to a vector space, where similar words are clustered together and different words are separated. We will be using Glove over Word2Vec, since GloVe does not just rely on the local context of words but it incorporates global word co-occurrence to obtain word vectors.
 
 The basic premise behind Glove is that we can derive semantic relationships between words from the co-occurrence matrix. For our model, the longest possible description length is 38 words. Therefore, we will map all the words in our 38-word long caption to a 200-dimension vector using Glove.
