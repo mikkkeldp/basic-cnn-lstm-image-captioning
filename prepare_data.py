@@ -5,26 +5,43 @@ import string
 from pickle import load
 from os import listdir
 from pickle import dump
+from keras.preprocessing import image
 from keras.applications.vgg16 import VGG16
 from keras.preprocessing.image import load_img
 from keras.preprocessing.image import img_to_array
-from keras.applications.vgg16 import preprocess_input
 from keras.models import Model
 from keras.applications.inception_v3 import InceptionV3
 from tensorflow.keras.applications import EfficientNetB7
-from keras.applications.inception_v3 import preprocess_input
+from keras.applications.vgg16 import preprocess_input as preprocess_input_vgg
+from keras.applications.inception_v3 import preprocess_input as preprocess_input_inc
+import glob
+import numpy as np
+from time import sleep
+from tqdm import tqdm
 
+def load_set(filename):
+	doc = load_doc(filename)
+	dataset = list()
+	# process line by line
+	for line in doc.split('\n'):
+		# skip empty lines
+		if len(line) < 1:
+			continue
+		# get the image identifier
+		identifier = line.split('.')[0]
+		dataset.append(identifier)
+	return set(dataset)
 
 # extract features from each photo in the directory
-def extract_features(directory, model="vgg"):
-	if model =="vgg":
-	# load the model
+def extract_features(directory,model="vgg"):
+	if model == "vgg":
 		model = VGG16()
-		# re-structure the model
 		model = Model(inputs=model.inputs, outputs=model.layers[-2].output)
-	elif model =="inception":
+	
+	elif model == "inception":
 		model = InceptionV3(weights='imagenet')
 		model = Model(model.input, model.layers[-2].output)
+	
 	else:
 		model = EfficientNetB7(weights='imagenet')
 		model = Model(model.input, model.layers[-2].output)
@@ -33,7 +50,8 @@ def extract_features(directory, model="vgg"):
 	print(model.summary())
 	# extract features from each photo
 	features = dict()
-	for name in listdir(directory):
+	print("extracting features....")
+	for name in tqdm(listdir(directory)):
 		# load an image from file
 		filename = directory + '/' + name
 		image = load_img(filename, target_size=(224, 224))
@@ -42,15 +60,37 @@ def extract_features(directory, model="vgg"):
 		# reshape data for the model
 		image = image.reshape((1, image.shape[0], image.shape[1], image.shape[2]))
 		# prepare the image for the VGG model
-		image = preprocess_input(image)
+		if feature_model == "vgg":
+			image = preprocess_input_vgg(image)
+		else:
+			image = preprocess_input_inc(image)	
 		# get features
 		feature = model.predict(image, verbose=0)
 		# get image id
 		image_id = name.split('.')[0]
 		# store feature
 		features[image_id] = feature
-		print('>%s' % name)
-	return features
+		
+	filename = 'dataset/Flickr8k_text/Flickr_8k.trainImages.txt'
+	train = load_set(filename)
+
+	filename = 'dataset/Flickr8k_text/Flickr_8k.devImages.txt'
+	test = load_set(filename)
+
+	train_features = load_photo_features(str(feature_model) + '.pkl', train)
+	print(len(train_features.keys()))
+	test_features = load_photo_features(str(feature_model) + '.pkl', test)
+
+	# save to file
+	dump(train_features, open(str(feature_model)+"-train.pkl", 'wb'))
+	dump(test_features, open(str(feature_model)+"-test.pkl", 'wb'))
+
+def load_photo_features(filename, dataset):
+	# load all features
+	all_features = load(open(filename, 'rb'))
+	# filter features
+	features = {k: all_features[k] for k in dataset}
+	return features  
 
 # load doc into memory
 def load_doc(filename):
@@ -123,14 +163,16 @@ def to_vocabulary(descriptions):
 	return all_desc  
 
 
-# extract features from all images (outputs  1-dimensional 4,096 element vector)
 
-directory = 'dataset/Flickr8k_Dataset'
+images_path = 'dataset/Flickr8k_Dataset/'
+train_images_path = 'dataset/Flickr8k_text/Flickr_8k.trainImages.txt'
+test_images_path = 'dataset/Flickr8k_text/Flickr_8k.testImages.txt'
+
+# extract features from all images (outputs  1-dimensional 4,096 element vector)
 feature_model = "vgg"
-features = extract_features(directory, model=feature_model)
-print('Extracted Features: %d' % len(features))
-# save to file
-dump(features, open(str(feature_model) +'.pkl', 'wb'))
+directory = 'dataset/Flickr8k_Dataset'
+
+extract_features(directory,model=feature_model)
 
 # load descriptions
 filename = 'dataset/Flickr8k_text/Flickr8k.token.txt'

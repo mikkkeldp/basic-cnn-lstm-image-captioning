@@ -106,6 +106,7 @@ This mapping will be done in a separate layer after the input layer called the e
 
 The embedding layer is where the partial caption of max length 38, is fed into, and the words are mapped to a 200-dimension Glove embedding. Before training we freeze the embedding layer since we do not want to retrain the weights in our embedding layer.
 
+Download the pre-trained word vector used in this project from [here](https://nlp.stanford.edu/projects/glove/).
 ## Model discussion
 
 The model is based on the "merge-model" described in [Marc Tanti, et al.](https://arxiv.org/abs/1703.09137), which is a encoder-decoder recurrent neural network architecture. A merge model combines both the encoded form of the image input with the encoded form of the text description generated at the current stage. The combination of these two encoded inputs is then used by a very simple decoder model to generate the next word in the sequence.

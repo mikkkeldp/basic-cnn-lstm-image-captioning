@@ -7,10 +7,12 @@ import string
 from pickle import load
 from os import listdir
 from pickle import dump
+import glob
 from keras.applications.vgg16 import VGG16
 from keras.preprocessing.image import load_img
 from keras.preprocessing.image import img_to_array
-from keras.applications.vgg16 import preprocess_input
+from keras.applications.vgg16 import preprocess_input as preprocess_input_vgg
+from keras.applications.inception_v3 import preprocess_input as preprocess_input_inc
 from keras.models import Model
 from keras.preprocessing.text import Tokenizer
 from numpy import array
@@ -25,6 +27,9 @@ from keras.layers import Embedding
 from keras.layers import Dropout
 from keras.layers.merge import add
 from keras.callbacks import ModelCheckpoint
+from keras.preprocessing import image
+from keras.applications.inception_v3 import InceptionV3
+import tensorflow as tf
 
 # load doc into memory
 def load_doc(filename):
@@ -67,10 +72,38 @@ def to_lines(descriptions):
 
 # fit a tokenizer given caption descriptions
 def create_tokenizer(descriptions):
-	lines = to_lines(descriptions)
-	tokenizer = Tokenizer()
-	tokenizer.fit_on_texts(lines)
-	return tokenizer
+	# lines = to_lines(descriptions)
+	# tokenizer = Tokenizer()
+	# tokenizer.fit_on_texts(lines)
+
+	# list of training caps
+	all_train_captions = []
+	for key, val in train_descriptions.items():
+		for cap in val:
+			all_train_captions.append(cap)	
+	
+	# get vocab and limit with threshold
+	word_count_threshold = 0
+	word_counts = {}
+	nsents = 0
+	for sent in all_train_captions:
+		nsents += 1
+		for w in sent.split(' '):
+			word_counts[w] = word_counts.get(w, 0) + 1
+	vocab = [w for w in word_counts if word_counts[w] >= word_count_threshold]
+
+	#  two dictionaries to map words to an index and vice versa
+	ixtoword = {}
+	wordtoix = {}
+	ix = 1
+	for w in vocab:
+		wordtoix[w] = ix
+		ixtoword[ix] = w
+		ix += 1
+
+	vocab_size = len(ixtoword) + 1
+
+	return ixtoword, wordtoix, vocab_size
 
 # load clean descriptions into memory
 def load_clean_descriptions(filename, dataset):
@@ -127,20 +160,66 @@ def create_sequences(tokenizer, max_length, descriptions, photos, vocab_size):
 				X1.append(photos[key][0])
 				X2.append(in_seq)
 				y.append(out_seq)
-	return array(X1), array(X2), array(y)   
+	return array(X1), array(X2), array(y)  
+
+# splits data in batches for training
+def data_generator(descriptions, photos, wordtoix, max_length, num_photos_per_batch):
+	X1, X2, y = list(), list(), list()
+	n=0
+	# loop for ever over images
+	while 1:
+		for key, desc_list in descriptions.items():
+			n+=1
+			# retrieve the photo feature
+			# key = key + ".jpg"
+			if feature_model == "vgg":
+				photo = photos[key][0]
+			else:
+				photo = photos[key]
+
+			for desc in desc_list:
+				# encode the sequence
+				seq = [wordtoix[word] for word in desc.split(' ') if word in wordtoix]
+				# split one sequence into multiple X, y pairs
+				for i in range(1, len(seq)):
+					# split into input and output pair
+					in_seq, out_seq = seq[:i], seq[i]
+					# pad input sequence
+					in_seq = pad_sequences([in_seq], maxlen=max_length)[0]
+					# encode output sequence
+					out_seq = to_categorical([out_seq], num_classes=vocab_size)[0]
+					# store
+					X1.append(photo)
+					X2.append(in_seq)
+					y.append(out_seq)
+
+			if n==num_photos_per_batch:
+				yield ([array(X1), array(X2)], array(y))
+				X1, X2, y = list(), list(), list()
+				n=0
 
 # calculate the length of the description with the most words
 def max_length(descriptions):
-	lines = to_lines(descriptions)
-	return max(len(d.split()) for d in lines)    
+	all_desc = list()
+	for key in train_descriptions.keys():
+		[all_desc.append(d) for d in train_descriptions[key]]
+	lines = all_desc
+	return max(len(d.split()) for d in lines)
+  
+
 
 # define the captioning model
 def define_model(vocab_size, max_length, model_type="merge",feature_model="vgg",glove=False):
 	
-	if feature_model =="injection":
+	if feature_model =="inception":
 		inputs1 = Input(shape=(2048,))
 	else:
 		inputs1 = Input(shape=(4096,))
+
+	if glove:
+		dim = 200
+	else:
+		dim = 256
 
 	if model_type == "merge":
 		#merge model
@@ -151,7 +230,7 @@ def define_model(vocab_size, max_length, model_type="merge",feature_model="vgg",
 
 		# sequence model
 		inputs2 = Input(shape=(max_length,))
-		se1 = Embedding(vocab_size, embedding_dim, mask_zero=True)(inputs2)
+		se1 = Embedding(vocab_size, dim, mask_zero=True)(inputs2)
 		se2 = Dropout(0.5)(se1)
 		se3 = LSTM(256)(se2)
 
@@ -164,12 +243,11 @@ def define_model(vocab_size, max_length, model_type="merge",feature_model="vgg",
 	else:
 		#inject model
 
-		inputs1 = Input(shape=(4096,))
 		fe1 = Dropout(0.5)(inputs1)
 		fe2 = Dense(256, activation='relu')(fe1)
 
 		inputs2 = Input(shape=(max_length,))
-		se1 = Embedding(vocab_size, 256, mask_zero=True)(inputs2)
+		se1 = Embedding(vocab_size, dim, mask_zero=True)(inputs2)
 		se2 = Dropout(0.5)(se1)
 
 		input = add([fe2, se2])
@@ -183,7 +261,10 @@ def define_model(vocab_size, max_length, model_type="merge",feature_model="vgg",
 		model.layers[2].set_weights([embedding_matrix])
 		model.layers[2].trainable = False
 
-	model.compile(loss='categorical_crossentropy', optimizer='adam')
+	#set learning rate	(not currently in use)
+	opt = keras.optimizers.Adam(learning_rate=0.01)
+
+	model.compile(loss='categorical_crossentropy', optimizer="adam")
 
 	# summarize model
 	print(model.summary())
@@ -191,50 +272,62 @@ def define_model(vocab_size, max_length, model_type="merge",feature_model="vgg",
 	return model
 
 
+gpus = tf.config.experimental.list_physical_devices('GPU') 
+tf.config.experimental.set_memory_growth(gpus[0], True)
+
+feature_model = "vgg"
+glove = False
 ## loading data
 # train and development (test) dataset have been prediefined in the Flickr_8k.trainImages.txt and Flickr_8k.devImages.txt files
-feature_model = "vgg"
+
 # load training dataset (6K)
 filename = 'dataset/Flickr8k_text/Flickr_8k.trainImages.txt'
 train = load_set(filename)
 print('Dataset: %d' % len(train))
 
-# descriptions
+# descriptions: dict with id as key with mulitple descriptions (values)
 train_descriptions = load_clean_descriptions('descriptions.txt', train)
+
 print('Descriptions: train=%d' % len(train_descriptions))
 
 # photo features
-train_features = load_photo_features(str(feature_model) + '.pkl', train)
+train_features = load(open(str(feature_model) + '-train.pkl', 'rb'))
+
 print('Photos: train=%d' % len(train_features))
 
+#train encoded featuers
+test_features = load(open(str(feature_model) + '-test.pkl', 'rb'))
+print('Photos: test=%d' % len(test_features))
+
+
 # prepare tokenizer
-tokenizer = create_tokenizer(train_descriptions) #word to index
-vocab_size = len(tokenizer.word_index) + 1
+ixtoword, wordtoix, vocab_size = create_tokenizer(train_descriptions) #word to index
+ 
 print('Vocabulary Size: %d' % vocab_size)
+if glove:
+	#glove embeddings
+	embeddings_index = {} 
+	f = open(os.path.join("", 'glove.6B.200d.txt'), encoding="utf-8")
+	for line in f:
+		values = line.split()
+		word = values[0]
+		coefs = np.asarray(values[1:], dtype='float32')
+		embeddings_index[word] = coefs
 
-#glove embeddings
-embeddings_index = {} 
-f = open(os.path.join("", 'glove.6B.200d.txt'), encoding="utf-8")
-for line in f:
-	values = line.split()
-	word = values[0]
-	coefs = np.asarray(values[1:], dtype='float32')
-	embeddings_index[word] = coefs
-
-# represents each word in vocab through a 200D vector
-embedding_dim = 200
-embedding_matrix = np.zeros((vocab_size, embedding_dim))
-for word, i in tokenizer.word_index.items():
-	embedding_vector = embeddings_index.get(word)
-	if embedding_vector is not None:
-		embedding_matrix[i] = embedding_vector	
+	# represents each word in vocab through a 200D vector
+	embedding_dim = 200
+	embedding_matrix = np.zeros((vocab_size, embedding_dim))
+	for word, i in wordtoix.items():
+		embedding_vector = embeddings_index.get(word)
+		if embedding_vector is not None:
+			embedding_matrix[i] = embedding_vector	
 
 # determine the maximum sequence length
 max_length = max_length(train_descriptions)
-print('Description Length: %d' % max_length)
+print('Longest Description Length: %d' % max_length)
 
-# prepare sequences
-X1train, X2train, ytrain = create_sequences(tokenizer, max_length, train_descriptions, train_features, vocab_size)
+# prepare sequences (not in use)
+# X1train, X2train, ytrain = create_sequences(tokenizer, max_length, train_descriptions, train_features, vocab_size)
 
 # dev dataset
 
@@ -246,26 +339,35 @@ print('Dataset: %d' % len(test))
 test_descriptions = load_clean_descriptions('descriptions.txt', test)
 print('Descriptions: test=%d' % len(test_descriptions))
 # photo features
-test_features = load_photo_features(str(feature_model) + '.pkl', test)
-print('Photos: test=%d' % len(test_features))
-# prepare sequences
-X1test, X2test, ytest = create_sequences(tokenizer, max_length, test_descriptions, test_features, vocab_size)
 
 
-# define the model
-glove = True
-model_type = "merge"
+# prepare sequences (not in use)
+# X1test, X2test, ytest = create_sequences(tokenizer, max_length, test_descriptions, test_features, vocab_size)
+
+
+
+
+model_type = "merge" #merge/injection architecture 
 model = define_model(vocab_size, max_length, model_type=model_type,feature_model=feature_model,glove=glove)
 
 #define naming of .h5 file
 if glove:
-	model_name = model_type + "-" + feature_model + "-glove-" 
+	model_name = model_type + "-" + feature_model + "-glove.h5" 
 else:
-	model_name = model_type + "-" + feature_model + "-" 	
+	model_name = model_type + "-" + feature_model + ".h5" 	
 
 # define checkpoint callback
-filepath = model_name + 'model-ep{epoch:03d}-loss{loss:.3f}-val_loss{val_loss:.3f}.h5'
-checkpoint = ModelCheckpoint(filepath, monitor='val_loss', verbose=1, save_best_only=True, mode='min')
+# filepath = model_name + 'model-ep{epoch:03d}-loss{loss:.3f}-val_loss{val_loss:.3f}.h5'
+# checkpoint = ModelCheckpoint(filepath, monitor='val_loss', verbose=1, save_best_only=True, mode='min')
 
 # fit model
-model.fit([X1train, X2train], ytrain, epochs=20, verbose=2, callbacks=[checkpoint], validation_data=([X1test, X2test], ytest)) 
+# model.fit([X1train, X2train], ytrain, epochs=20, verbose=2, callbacks=[checkpoint], validation_data=([X1test, X2test], ytest)) 
+
+epochs = 4
+batch_size = 3
+steps = len(train_descriptions)//batch_size
+
+generator = data_generator(train_descriptions, train_features, wordtoix, max_length, batch_size)
+model.fit(generator, epochs=epochs, steps_per_epoch=steps, verbose=1)
+
+model.save(model_name)
