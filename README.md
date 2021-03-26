@@ -92,12 +92,15 @@ Image with the description pairs
 <img src="https://cdn.analyticsvidhya.com/wp-content/uploads/2020/10/Screenshot-2020-10-20-at-4.01.28-PM-670x440.png" width="500" height="300" />
 </p>
 
-##### Vocabulary:
+#### Vocabulary:
+<span style="color:blue">
 Number of unique words: 8828
-<span style="color:blue"> 
-There are words that are seldomly used or misspelled words within the vocabulary of the dataset. The LSTM model produces a probability distribution over each word in the vocabulary. If we reduce the vocabulary to words occurring above a certain threshold, we reduce the number of possible words the LSTM model has to predict and subsequently narrowing the class distribution over the words.  </span>
 
-##### <span style="color:blue"> Glove Embeddings </span>
+There are words that are seldomly used or misspelled words within the vocabulary of the dataset. The LSTM model produces a probability distribution over each word in the vocabulary. If we reduce the vocabulary to words occurring above a certain threshold, we reduce the number of possible words the LSTM model has to predict and subsequently narrowing the class distribution over the words.  
+</span>
+
+####  Glove Embeddings 
+<span style="color:blue">
 Word vectors map words to a vector space, where similar words are clustered together and different words are separated. We will be using Glove over Word2Vec, since GloVe does not just rely on the local context of words but it incorporates global word co-occurrence to obtain word vectors.
 
 The basic premise behind Glove is that we can derive semantic relationships between words from the co-occurrence matrix. For our model, the longest possible description length is 38 words. Therefore, we will map all the words in our 38-word long caption to a 200-dimension vector using Glove.
@@ -106,7 +109,8 @@ This mapping will be done in a separate layer after the input layer called the e
 
 The embedding layer is where the partial caption of max length 38, is fed into, and the words are mapped to a 200-dimension Glove embedding. Before training we freeze the embedding layer since we do not want to retrain the weights in our embedding layer.
 
-Download the pre-trained word vector used in this project from [here](https://nlp.stanford.edu/projects/glove/).
+Download the pre-trained word vector used in this project from </span> [here](https://nlp.stanford.edu/projects/glove/). 
+
 ## Model discussion
 
 The model is based on the "merge-model" described in [Marc Tanti, et al.](https://arxiv.org/abs/1703.09137), which is a encoder-decoder recurrent neural network architecture. A merge model combines both the encoded form of the image input with the encoded form of the text description generated at the current stage. The combination of these two encoded inputs is then used by a very simple decoder model to generate the next word in the sequence.
@@ -165,9 +169,9 @@ Cumulative scores refer to the calculation of individual n-gram scores at all or
 
 For this experiment we make use of BLEU-1, BLEU-2, BLEU-3 and BLEU-4.
 
-### Model performance and comparison
+## Model performance and comparison
 
-##### <span style="color:blue"> Model abbreviation table </span>
+### <span style="color:blue"> Model abbreviation table </span>
 | Abbreviation | Description |
 | ------       | ---------   |
 | Merge        | Merge architecture: A merge model combines both the encoded form of the image input with the encoded form of the text description generated at the current stage. |
@@ -186,8 +190,8 @@ Below are the BLEU-1,2,3,4 Metrics compared to other methods achieved on the Fli
 | [Kiros et al., (2014)](https://arxiv.org/pdf/1411.4555.pdf)   |  65.6  |  42.4  |  27.7  |  17.7  |
 | [Tanti et al., (2017)](https://arxiv.org/pdf/1708.02043.pdf)  | 60.1   | 41.1   | 27.4   | 17.9   |
 | Merge-VGG                                                     | 57.98  | 34.12  | 25.47  | 3.67   |
-| Injection-VGG                                                 | 29.13  | 11.17  | 7.33   | 0.5    | 
-| Merge-Inception                                               | 53.26  | 27.57  | 18.25  | 7.76   | 
+| <span style="color:blue"> Injection-VGG     </span>                                             | 29.13  | 11.17  | 7.33   | 0.5    | 
+| <span style="color:blue"> Merge-Inception        </span>                                        | 53.26  | 27.57  | 18.25  | 7.76   | 
 | Injection-Inception-Glove                                     |   tbd  |  tbd   |  tbd   | tbd    |
 
 ### Model Extensions
@@ -201,13 +205,13 @@ Instead of using VGG-16, consider a larger model that offers better performance 
 The model learned the word vectors as part of fitting the model. Better performance may be achieved by using word vectors either pre-trained on the training dataset or trained on a much larger corpus of text, such as news articles or Wikipedia. GLove or WordNet would be appropriate candidates. 
 
 - [ ] ***Smaller Vocabulary***  
-A larger vocabulary of nearly eight thousand words was used in the development of the model. Many of the words supported may be misspellings or only used once in the entire dataset. Refine the vocabulary and reduce the size, perhaps by half.
+<span style="color:blue"> A larger vocabulary of nearly eight thousand words was used in the development of the model. Many of the words supported may be misspellings or only used once in the entire dataset. Refine the vocabulary and reduce the size, perhaps by half. </span>
 
 - [ ] ***Attention Mechanism***  
 Attention-based mechanisms are becoming increasingly popular in deep learning because they can dynamically focus on the various parts of the input image while the output sequences are being produced. Using the whole representation of the image h to condition the generation of each word cannot efficiently produce different words for different parts of the image. This is exactly where an Attention mechanism is helpful.
 
 - [ ] ***Beam Search***  
-Previously, greedy search is used, where the the word with the highest probability is selected at each step in the output sequence. While this approach is often effective, it is obviously non-optimal. Instead of greedily choosing the most likely next step as the sequence is constructed, beam search expands all possible next steps and keeps the k most likely, where k is a user-specified parameter and controls the number of beams or parallel searches through the sequence of probabilities.
+<span style="color:blue"> Previously, greedy search is used, where the the word with the highest probability is selected at each step in the output sequence. While this approach is often effective, it is obviously non-optimal. Instead of greedily choosing the most likely next step as the sequence is constructed, beam search expands all possible next steps and keeps the k most likely, where k is a user-specified parameter and controls the number of beams or parallel searches through the sequence of probabilities. </span>
 
 - [ ] ***Bigger datasets***  
 Make use of the larger datasets Flickr30k (30,000 images), MSCOCO (220,000 images), or Stock3M  (3 Million images). A bigger dataset would capture more examples of object interactions and hopefully be able to generalize better to unseen examples. Bigger datasets require more computing resources and training times. 
