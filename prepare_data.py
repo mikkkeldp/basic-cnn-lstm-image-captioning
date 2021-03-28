@@ -103,11 +103,24 @@ def clean_descriptions(descriptions):
 			# store as string
 			desc_list[i] =  ' '.join(desc)  
 
+def remove_out_of_vocab_words(caption, new_vocab):
+	words = caption.split(" ")
+	new_cap = ""
+	for word in words:
+		if word in new_vocab:
+			if new_cap != "":
+				new_cap += " " + word
+			else:
+				new_cap += word	
+	return new_cap
+
 # save descriptions to file, one per line
-def save_descriptions(descriptions, filename):
+def save_descriptions(descriptions, filename,reduce_v,new_vocab):
 	lines = list()
 	for key, desc_list in descriptions.items():
 		for desc in desc_list:
+			if reduce_v:
+				desc = remove_out_of_vocab_words(desc, new_vocab)
 			lines.append(key + ' ' + desc)
 	data = '\n'.join(lines)
 	file = open(filename, 'w')
@@ -122,15 +135,58 @@ def to_vocabulary(descriptions):
 		[all_desc.update(d.split()) for d in descriptions[key]]
 	return all_desc  
 
+def get_train_descriptions(descriptions):
+	train_descriptions = dict()
+	with open("dataset/Flickr8k_text/Flickr_8k.trainImages.txt", "r") as f:
+		data = f.read()
+	try:
+		for el in data.split("\n"):
+			tokens = el.split(".")
+			image_id = tokens[0]
+			if image_id in descriptions:
+				train_descriptions[image_id] = descriptions[image_id]
+
+	except Exception as e:
+		print("Exception got :- \n", e)
+
+	return train_descriptions	
+
+def get_word_freq(train_descriptions):
+		# getting word frequencies
+		word_freq = {}
+
+		for k in train_descriptions.keys():
+			for caption in train_descriptions[k]:
+
+				caption = caption.strip("endseq")
+				caption = caption.strip("startseq")
+				caption = caption.split(" ")
+				for word in caption:
+					if word not in word_freq:
+						word_freq[word] = 0
+					word_freq[word] += 1
+		word_freq = dict(sorted(word_freq.items(), key=lambda item: item[1], reverse=True))
+
+		#remove empty string entry
+
+		word_freq.pop('')
+		return word_freq
+
+def get_new_vocab(word_freq):
+	new_vocab = []
+	for key, value in word_freq.items():
+		if value >= 10:
+			new_vocab.append(key)
+	return new_vocab
 
 # extract features from all images (outputs  1-dimensional 4,096 element vector)
 
-directory = 'dataset/Flickr8k_Dataset'
-feature_model = "vgg"
-features = extract_features(directory, model=feature_model)
-print('Extracted Features: %d' % len(features))
-# save to file
-dump(features, open(str(feature_model) +'.pkl', 'wb'))
+# directory = 'dataset/Flickr8k_Dataset'
+# feature_model = "vgg"
+# features = extract_features(directory, model=feature_model)
+# print('Extracted Features: %d' % len(features))
+# # save to file
+# dump(features, open(str(feature_model) +'.pkl', 'wb'))
 
 # load descriptions
 filename = 'dataset/Flickr8k_text/Flickr8k.token.txt'
@@ -148,7 +204,19 @@ print("cleaned descriptions: tolowercase, removed single letter words, removed p
 vocabulary = to_vocabulary(descriptions)
 print('Vocabulary Size: %d' % len(vocabulary))
 
+reduce_vocab = True
+if reduce_vocab:
+	train_descriptions = get_train_descriptions(descriptions)
+	word_freq = get_word_freq(train_descriptions) # word freq sorted by freq 
+	new_words = get_new_vocab(word_freq)
+
 # save descriptions
-save_descriptions(descriptions, 'descriptions.txt')
-print("saved vocabulary to descriptions.txt")
+if reduce_vocab:
+	filename = "reduced_descriptions.txt"
+else:
+	filename = 'descriptions.txt'
+
+save_descriptions(descriptions, filename,reduce_vocab, new_words)
+print("saved vocabulary to " + filename)
+
 

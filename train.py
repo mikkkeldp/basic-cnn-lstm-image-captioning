@@ -114,7 +114,7 @@ def create_sequences(tokenizer, max_length, descriptions, photos, vocab_size):
 		# walk through each description for the image
 		for desc in desc_list:
 			# encode the sequence
-			seq = tokenizer.texts_to_sequences([desc])[0]
+			seq = tokenizer.texts_to_sequences([desc], num_words = 1662)[0]
 			# split one sequence into multiple X,y pairs
 			for i in range(1, len(seq)):
 				# split into input and output pair

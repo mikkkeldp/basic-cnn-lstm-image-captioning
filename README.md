@@ -93,6 +93,23 @@ Number of unique words: 8828
 
 There are words that are seldomly used or misspelled words within the vocabulary of the dataset. The LSTM model produces a probability distribution over each word in the vocabulary. If we reduce the vocabulary to words occurring above a certain threshold, we reduce the number of possible words the LSTM model has to predict and subsequently narrowing the class distribution over the words. 
 
+***Exploring the dataset***
+
+Statistical summary of the vocabulary word frequemcies:  
+Standard deviation: 639.93
+Mean word frequency: 44.01
+Min word frequency: 1
+Max word frequency: 46784
+
+<p align="center">
+<img src="data_exploration/top_50_words.png" width="600" height="300" />
+</p>
+
+We notice a heavily skewed distribution of the word frequencies, with the most frequent word being "a" (occuring 46784 times) and 7166 word occuring less than 10 times. 
+
+If we limit the vocabulary to words only occurring more than 10 times, we reduce the vocabulary size to 1662. 
+
+
 ### Glove Embeddings
 Word vectors map words to a vector space, where similar words are clustered together and different words are separated. We will be using Glove over Word2Vec, since GloVe does not just rely on the local context of words but it incorporates global word co-occurrence to obtain word vectors.
 
