@@ -4,6 +4,9 @@ from keras.preprocessing.text import Tokenizer
 from keras.preprocessing.sequence import pad_sequences
 from keras.models import load_model
 from nltk.translate.bleu_score import corpus_bleu
+import numpy as np
+from keras.preprocessing.sequence import pad_sequences
+from tqdm import tqdm
 
 # load doc into memory
 def load_doc(filename):
@@ -67,14 +70,46 @@ def to_lines(descriptions):
 
 # fit a tokenizer given caption descriptions
 def create_tokenizer(descriptions):
-	lines = to_lines(descriptions)
-	tokenizer = Tokenizer()
-	tokenizer.fit_on_texts(lines)
-	return tokenizer
+
+	# lines = to_lines(descriptions)
+	# tokenizer = Tokenizer()
+	# tokenizer.fit_on_texts(lines)
+
+	# list of training caps
+	all_train_captions = []
+	for key, val in train_descriptions.items():
+		for cap in val:
+			all_train_captions.append(cap)	
+	
+	# get vocab and limit with threshold
+	word_count_threshold = 0
+	word_counts = {}
+	nsents = 0
+	for sent in all_train_captions:
+		nsents += 1
+		for w in sent.split(' '):
+			word_counts[w] = word_counts.get(w, 0) + 1
+	vocab = [w for w in word_counts if word_counts[w] >= word_count_threshold]
+
+	#  two dictionaries to map words to an index and vice versa
+	ixtoword = {}
+	wordtoix = {}
+	ix = 1
+	for w in vocab:
+		wordtoix[w] = ix
+		ixtoword[ix] = w
+		ix += 1
+
+	vocab_size = len(ixtoword) + 1
+
+	return ixtoword, wordtoix, vocab_size
 
 # calculate the length of the description with the most words
 def max_length(descriptions):
-	lines = to_lines(descriptions)
+	all_desc = list()
+	for key in train_descriptions.keys():
+		[all_desc.append(d) for d in train_descriptions[key]]
+	lines = all_desc
 	return max(len(d.split()) for d in lines)
 
 # map an integer to a word
@@ -86,41 +121,36 @@ def word_for_id(integer, tokenizer):
 
 # generate a description for an image
 def generate_desc(model, tokenizer, photo, max_length):
-	# seed the generation process
-	in_text = 'startseq'
-	# iterate over the whole length of the sequence
-	for i in range(max_length):
-		# integer encode input sequence
-		sequence = tokenizer.texts_to_sequences([in_text])[0]
-		# pad input
-		sequence = pad_sequences([sequence], maxlen=max_length)
-		# predict next word
-		yhat = model.predict([photo,sequence], verbose=0)
-		# convert probability to integer
-		yhat = argmax(yhat)
-		# map integer to word
-		word = word_for_id(yhat, tokenizer)
-		# stop if we cannot map the word
-		if word is None:
-			break
-		# append as input for generating the next word
-		in_text += ' ' + word
-		# stop if we predict the end of the sequence
-		if word == 'endseq':
-			break
-	return in_text
+		in_text = 'startseq'
+		for i in range(max_length):
+			sequence = [tokenizer[w] for w in in_text.split() if w in tokenizer]
+			sequence = pad_sequences([sequence], maxlen=max_length)
+			yhat = model.predict([photo,sequence], verbose=0)
+			yhat = np.argmax(yhat)
+			word = ixtoword[yhat]
+			in_text += ' ' + word
+			if word == 'endseq':
+				break
+
+		final = in_text.split()
+		final = final[1:-1]
+		final = ' '.join(final)
+		return final
 
 # evaluate the skill of the model
 def evaluate_model(model, descriptions, photos, tokenizer, max_length):
 	actual, predicted = list(), list()
 	# step over the whole set
-	for key, desc_list in descriptions.items():
+	print("evaluating model...")
+	for key, desc_list in tqdm(descriptions.items()):
 		# generate description
-		yhat = generate_desc(model, tokenizer, photos[key], max_length)
-		print("yhat ", yhat)
+		# key = key + ".jpg"
+		photo = photos[key][0].reshape((1,4096))
+		yhat = generate_desc(model, wordtoix, photo, max_length)
+		# print("yhat ", yhat)
 		# store actual and predicted
 		references = [d.split() for d in desc_list]
-		print("ref:" , references)
+		# print("ref:" , references)
 		actual.append(references)
 		predicted.append(yhat.split())
 	# calculate BLEU score
@@ -128,6 +158,8 @@ def evaluate_model(model, descriptions, photos, tokenizer, max_length):
 	print('BLEU-2: %f' % corpus_bleu(actual, predicted, weights=(0.5, 0.5, 0, 0)))
 	print('BLEU-3: %f' % corpus_bleu(actual, predicted, weights=(0.3, 0.3, 0.3, 0)))
 	print('BLEU-4: %f' % corpus_bleu(actual, predicted, weights=(0.25, 0.25, 0.25, 0.25)))
+
+feature_model = 'vgg'
 
 # prepare tokenizer on train set
 
@@ -139,17 +171,19 @@ print('Dataset: %d' % len(train))
 train_descriptions = load_clean_descriptions('descriptions.txt', train)
 print('Descriptions: train=%d' % len(train_descriptions))
 # prepare tokenizer
-tokenizer = create_tokenizer(train_descriptions)
-vocab_size = len(tokenizer.word_index) + 1
+
+ixtoword, wordtoix, vocab_size = create_tokenizer(train_descriptions) #word to index
+
 print('Vocabulary Size: %d' % vocab_size)
+
 # determine the maximum sequence length
 max_length = max_length(train_descriptions)
-print('Description Length: %d' % max_length)
+print('Longest Description Length: %d' % max_length)
 
 # prepare test set
 
 # load test set
-filename = 'dataset/Flickr8k_text/Flickr_8k.testImages.txt'
+filename = 'dataset/Flickr8k_text/Flickr_8k.devImages.txt'
 test = load_set(filename)
 print('Dataset: %d' % len(test))
 # descriptions
@@ -157,13 +191,13 @@ test_descriptions = load_clean_descriptions('descriptions.txt', test)
 print('Descriptions: test=%d' % len(test_descriptions))
 # photo features
 
-feature_model = "inception"
+feature_model = "vgg"
 
-test_features = load_photo_features(str(feature_model) + '.pkl', test)
+test_features = load(open(str(feature_model) + '-test.pkl', 'rb'))
 print('Photos: test=%d' % len(test_features))
-
+print(test_features.keys())
 # load the model
-filename = 'merge_inception.h5' #insert your best model here
+filename = 'merge-vgg.h5' #insert your best model here
 model = load_model(filename)
 # evaluate model
-evaluate_model(model, test_descriptions, test_features, tokenizer, max_length)
+evaluate_model(model, test_descriptions, test_features, wordtoix, max_length)
