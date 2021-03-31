@@ -1,19 +1,23 @@
 from PIL import Image
 import tensorflow
+print(tensorflow.__version__)
 import keras
 import string
 from pickle import load
 from os import listdir
 from pickle import dump
 from keras.preprocessing import image
-from keras.applications.vgg16 import VGG16
+
 from keras.preprocessing.image import load_img
 from keras.preprocessing.image import img_to_array
 from keras.models import Model
+from keras.applications.vgg16 import VGG16
 from keras.applications.inception_v3 import InceptionV3
-from tensorflow.keras.applications import EfficientNetB7
+from keras.applications.efficientnet import EfficientNetB7
+from keras.applications.efficientnet import preprocess_input as preprocess_input_eff
 from keras.applications.vgg16 import preprocess_input as preprocess_input_vgg
 from keras.applications.inception_v3 import preprocess_input as preprocess_input_inc
+
 import glob
 import numpy as np
 from time import sleep
@@ -34,6 +38,7 @@ def load_set(filename):
 
 # extract features from each photo in the directory
 def extract_features(directory,model="vgg"):
+	feature_model = model
 	if model == "vgg":
 		model = VGG16()
 		model = Model(inputs=model.inputs, outputs=model.layers[-2].output)
@@ -54,7 +59,10 @@ def extract_features(directory,model="vgg"):
 	for name in tqdm(listdir(directory)):
 		# load an image from file
 		filename = directory + '/' + name
-		image = load_img(filename, target_size=(224, 224))
+		if feature_model == "efficientnet":
+			image = load_img(filename, target_size=(600, 600))
+		else:	
+			image = load_img(filename, target_size=(224, 224))
 		# convert the image pixels to a numpy array
 		image = img_to_array(image)
 		# reshape data for the model
@@ -62,28 +70,19 @@ def extract_features(directory,model="vgg"):
 		# prepare the image for the VGG model
 		if feature_model == "vgg":
 			image = preprocess_input_vgg(image)
-		else:
+		elif feature_model == "inception":
 			image = preprocess_input_inc(image)	
+		else:
+			image = preprocess_input_eff(image)	
 		# get features
 		feature = model.predict(image, verbose=0)
 		# get image id
 		image_id = name.split('.')[0]
 		# store feature
 		features[image_id] = feature
-		
-	filename = 'dataset/Flickr8k_text/Flickr_8k.trainImages.txt'
-	train = load_set(filename)
+	return features	
 
-	filename = 'dataset/Flickr8k_text/Flickr_8k.devImages.txt'
-	test = load_set(filename)
 
-	train_features = load_photo_features(str(feature_model) + '.pkl', train)
-	print(len(train_features.keys()))
-	test_features = load_photo_features(str(feature_model) + '.pkl', test)
-
-	# save to file
-	dump(train_features, open(str(feature_model)+"-train.pkl", 'wb'))
-	dump(test_features, open(str(feature_model)+"-test.pkl", 'wb'))
 
 def load_photo_features(filename, dataset):
 	# load all features
@@ -220,12 +219,12 @@ def get_new_vocab(word_freq):
 	return new_vocab
 
 
-# directory = 'dataset/Flickr8k_Dataset'
-# feature_model = "vgg"
-# features = extract_features(directory, model=feature_model)
-# print('Extracted Features: %d' % len(features))
-# # save to file
-# dump(features, open(str(feature_model) +'.pkl', 'wb'))
+directory = 'dataset/Flickr8k_Dataset'
+feature_model = "efficientnet"
+features = extract_features(directory, model=feature_model)
+print('Extracted Features: %d' % len(features))
+# save to file
+dump(features, open(str(feature_model) +'.pkl', 'wb'))
 
 # load descriptions
 filename = 'dataset/Flickr8k_text/Flickr8k.token.txt'
@@ -243,7 +242,8 @@ print("cleaned descriptions: tolowercase, removed single letter words, removed p
 vocabulary = to_vocabulary(descriptions)
 print('Vocabulary Size: %d' % len(vocabulary))
 
-reduce_vocab = True
+reduce_vocab = False
+new_word = []
 if reduce_vocab:
 	train_descriptions = get_train_descriptions(descriptions)
 	word_freq = get_word_freq(train_descriptions) # word freq sorted by freq 

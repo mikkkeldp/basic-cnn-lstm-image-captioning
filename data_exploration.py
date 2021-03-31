@@ -63,6 +63,7 @@ for k in descriptions.keys():
         # replaces specific and general phrases
         sent = decontracted(ec)
         sent = sent.replace('\\r', ' ')
+        sent = sent.replace(" a ", " ")
         sent = sent.replace('\\"', ' ')
         sent = sent.replace('\\n', ' ')
         sent = re.sub('[^A-Za-z0-9]+', ' ', sent)
@@ -96,6 +97,7 @@ for k in train_descriptions.keys():
 
         caption = caption.strip("endseq")
         caption = caption.strip("startseq")
+        caption = caption.replace(" a ", " ")
         caption = caption.split(" ")
         for word in caption:
             if word not in word_freq:
@@ -120,7 +122,7 @@ plt.ylabel("Frequency")
 plt.xlabel("Word")
 plt.bar(x,y)
 plt.xticks(x, sample.keys(), rotation = 'vertical')
-# plt.show()
+plt.show()
 
 freq_list = list(word_freq.values())
 print("std: ", np.std(freq_list))
@@ -136,5 +138,5 @@ for value in word_freq.values():
         n += 1
 print("New vocab: ", n)
 
-
+print(word_freq)
 # remove words occuring less than 10 times, as well as stop words (a, the, etc)

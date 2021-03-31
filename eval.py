@@ -70,39 +70,10 @@ def to_lines(descriptions):
 
 # fit a tokenizer given caption descriptions
 def create_tokenizer(descriptions):
-
-	# lines = to_lines(descriptions)
-	# tokenizer = Tokenizer()
-	# tokenizer.fit_on_texts(lines)
-
-	# list of training caps
-	all_train_captions = []
-	for key, val in train_descriptions.items():
-		for cap in val:
-			all_train_captions.append(cap)	
-	
-	# get vocab and limit with threshold
-	word_count_threshold = 0
-	word_counts = {}
-	nsents = 0
-	for sent in all_train_captions:
-		nsents += 1
-		for w in sent.split(' '):
-			word_counts[w] = word_counts.get(w, 0) + 1
-	vocab = [w for w in word_counts if word_counts[w] >= word_count_threshold]
-
-	#  two dictionaries to map words to an index and vice versa
-	ixtoword = {}
-	wordtoix = {}
-	ix = 1
-	for w in vocab:
-		wordtoix[w] = ix
-		ixtoword[ix] = w
-		ix += 1
-
-	vocab_size = len(ixtoword) + 1
-
-	return ixtoword, wordtoix, vocab_size
+	lines = to_lines(descriptions)
+	tokenizer = Tokenizer()
+	tokenizer.fit_on_texts(lines)
+	return tokenizer
 
 # calculate the length of the description with the most words
 def max_length(descriptions):
@@ -121,83 +92,137 @@ def word_for_id(integer, tokenizer):
 
 # generate a description for an image
 def generate_desc(model, tokenizer, photo, max_length):
-		in_text = 'startseq'
-		for i in range(max_length):
-			sequence = [tokenizer[w] for w in in_text.split() if w in tokenizer]
-			sequence = pad_sequences([sequence], maxlen=max_length)
-			yhat = model.predict([photo,sequence], verbose=0)
-			yhat = np.argmax(yhat)
-			word = ixtoword[yhat]
-			in_text += ' ' + word
-			if word == 'endseq':
-				break
+	# seed the generation process
+	in_text = 'startseq'
+	# iterate over the whole length of the sequence
+	for _ in range(max_length):
+		# integer encode input sequence
+		sequence = tokenizer.texts_to_sequences([in_text])[0]
+		# pad input
+		sequence = pad_sequences([sequence], maxlen=max_length)
+		# predict next word
+		yhat = model.predict([photo,sequence], verbose=0)
+		# convert probability to integer
+		yhat = argmax(yhat)
+		# map integer to word
+		word = word_for_id(yhat, tokenizer)
+		# stop if we cannot map the word
+		if word is None:
+			break
+		# append as input for generating the next word
+		in_text += ' ' + word
+		# stop if we predict the end of the sequence
+		if word == 'endseq':
+			break
+	return in_text
 
-		final = in_text.split()
-		final = final[1:-1]
-		final = ' '.join(final)
-		return final
+# generate a description for an image using beam search
+def generate_desc_beam_search(model, tokenizer, image, max_length, beam_index=3):
+	# in_text --> [[idx,prob]] ;prob=0 initially
+	in_text = [[tokenizer.texts_to_sequences(['startseq'])[0], 0.0]]
+	while len(in_text[0][0]) < max_length:
+		tempList = []
+		for seq in in_text:
+			padded_seq = pad_sequences([seq[0]], maxlen=max_length)
+			preds = model.predict([image,padded_seq], verbose=0)
+			# Take top (i.e. which have highest probailities) `beam_index` predictions
+			top_preds = np.argsort(preds[0])[-beam_index:]
+			# Getting the top `beam_index` predictions and 
+			for word in top_preds:
+				next_seq, prob = seq[0][:], seq[1]
+				next_seq.append(word)
+				# Update probability
+				prob += preds[0][word]
+				# Append as input for generating the next word
+				tempList.append([next_seq, prob])
+		in_text = tempList
+		# Sorting according to the probabilities
+		in_text = sorted(in_text, reverse=False, key=lambda l: l[1])
+		# Take the top words
+		in_text = in_text[-beam_index:]
+	in_text = in_text[-1][0]
+	final_caption_raw = [int_to_word(i,tokenizer) for i in in_text]
+	final_caption = []
+	for word in final_caption_raw:
+		if word=='endseq':
+			break
+		else:
+			final_caption.append(word)
+	final_caption.append('endseq')
+	return ' '.join(final_caption)	
+
+# map intereger to word
+def int_to_word(integer, tokenizer):
+	for word, index in tokenizer.word_index.items():
+		if index == integer:
+			return word
+	return None
+
 
 # evaluate the skill of the model
 def evaluate_model(model, descriptions, photos, tokenizer, max_length):
 	actual, predicted = list(), list()
 	# step over the whole set
-	print("evaluating model...")
+	print("starting evaluation...")
 	for key, desc_list in tqdm(descriptions.items()):
 		# generate description
-		# key = key + ".jpg"
-		photo = photos[key][0].reshape((1,4096))
-		yhat = generate_desc(model, wordtoix, photo, max_length)
-		# print("yhat ", yhat)
+		if beam:
+			yhat = generate_desc_beam_search(model, tokenizer, photos[key], max_length)
+		else:
+			yhat = generate_desc(model, tokenizer, photos[key], max_length)
 		# store actual and predicted
 		references = [d.split() for d in desc_list]
-		# print("ref:" , references)
 		actual.append(references)
 		predicted.append(yhat.split())
 	# calculate BLEU score
 	print('BLEU-1: %f' % corpus_bleu(actual, predicted, weights=(1.0, 0, 0, 0)))
 	print('BLEU-2: %f' % corpus_bleu(actual, predicted, weights=(0.5, 0.5, 0, 0)))
-	print('BLEU-3: %f' % corpus_bleu(actual, predicted, weights=(0.3, 0.3, 0.3, 0)))
+	print('BLEU-3: %f' % corpus_bleu(actual, predicted, weights=(0.3333, 0.3333, 0.3333, 0)))
 	print('BLEU-4: %f' % corpus_bleu(actual, predicted, weights=(0.25, 0.25, 0.25, 0.25)))
 
-feature_model = 'vgg'
+#model parameters
+feature_model = "efficientnet"
+beam = True
+reduce_v = True
 
-# prepare tokenizer on train set
-
-# load training dataset (6K)
+# prepare train set
 filename = 'dataset/Flickr8k_text/Flickr_8k.trainImages.txt'
 train = load_set(filename)
 print('Dataset: %d' % len(train))
-# descriptions
-train_descriptions = load_clean_descriptions('descriptions.txt', train)
+
+# prepare test set
+filename = 'dataset/Flickr8k_text/Flickr_8k.devImages.txt'
+test = load_set(filename)
+print('Dataset: %d' % len(test))
+
+# load test descriptions
+test_descriptions = load_clean_descriptions('descriptions.txt', test)
+print('Descriptions: test=%d' % len(test_descriptions))
+
+# load train descriptions
+if reduce_v:
+	train_descriptions = load_clean_descriptions('reduced_descriptions.txt', train)
+else:	
+	train_descriptions = load_clean_descriptions('descriptions.txt', train)
 print('Descriptions: train=%d' % len(train_descriptions))
+
+
 # prepare tokenizer
-
-ixtoword, wordtoix, vocab_size = create_tokenizer(train_descriptions) #word to index
-
+tokenizer = create_tokenizer(train_descriptions)
+vocab_size = len(tokenizer.word_index) + 1
 print('Vocabulary Size: %d' % vocab_size)
 
 # determine the maximum sequence length
 max_length = max_length(train_descriptions)
 print('Longest Description Length: %d' % max_length)
 
-# prepare test set
 
-# load test set
-filename = 'dataset/Flickr8k_text/Flickr_8k.devImages.txt'
-test = load_set(filename)
-print('Dataset: %d' % len(test))
-# descriptions
-test_descriptions = load_clean_descriptions('descriptions.txt', test)
-print('Descriptions: test=%d' % len(test_descriptions))
 # photo features
-
-feature_model = "vgg"
-
-test_features = load(open(str(feature_model) + '-test.pkl', 'rb'))
+test_features = load_photo_features(feature_model+'.pkl', test)
 print('Photos: test=%d' % len(test_features))
-print(test_features.keys())
+
 # load the model
-filename = 'merge-vgg.h5' #insert your best model here
+filename = 'merge-efficientnet-glove-RV-model-ep003-loss3.047-val_loss3.335.h5' #insert your best model here
 model = load_model(filename)
 # evaluate model
-evaluate_model(model, test_descriptions, test_features, wordtoix, max_length)
+evaluate_model(model, test_descriptions, test_features, tokenizer, max_length)
