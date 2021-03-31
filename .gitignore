@@ -9,3 +9,4 @@ trained_models
 *.png
 *.jpg
 *.json
+.env
