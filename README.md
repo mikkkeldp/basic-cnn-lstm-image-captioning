@@ -27,8 +27,8 @@
      - Added beam search and greedy search explanations under the Model Evaluation section    
 - **31/03/2021**
     - Added performances of model variations
-    - Added Beam search functionality to eval.py and new_example_pred.py
-    - Added Model variation accuracies
+    - Added meam search functionality to eval.py and new_example_pred.py
+    - Added model variation accuracies
     - Added quantitative results
 
 ## Run instructions
