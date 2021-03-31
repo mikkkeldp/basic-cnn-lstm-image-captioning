@@ -6,7 +6,6 @@ dataset
 eval2.py
 train2.py
 trained_models
-*.png
 *.jpg
 *.json
 .env
