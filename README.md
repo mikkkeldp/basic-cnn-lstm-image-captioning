@@ -253,7 +253,7 @@ Below are the BLEU-1,2,3,4 Metrics compared to other methods achieved on the Fli
 | Merge-EfficientNetB7-RV                                       | 58.37  | 36.27  | 23.25  | 14.25   |
 | Merge-EfficientNetB7-Glove-RV                                 | 60.38  | 36.96  | 23.27  | 14.17   |
 | Merge-VGG-Glove-RV                                            | 46.60 | 22.36  | 12.34  | 6.63   |
-| Merge-EfficientNetB7-Glove-RV-BM3                             | **60.69** | **37.74**  | 25.15  | **16.43**  |
+| Merge-EfficientNetB7-Glove-RV-BS3                             | **60.69** | **37.74**  | 25.15  | **16.43**  |
 
 
 ### Qualitative evaluation
