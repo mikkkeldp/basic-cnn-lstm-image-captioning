@@ -153,7 +153,7 @@ Statistical summary of the caption lengths of the training set:
 Below is a bar plot of the caption lengths.
 
 <p align="center">
-<img src="data_exploration/caption_len_dist.png" width="400" height="300" />
+<img src="data_exploration/caption_len_dist.png" width="600" height="300" />
 </p>
 
 We notice that the longest caption is of 34 words. The LSTM could then expect an padded input sequence with a pre-defined length (34 words). 
