@@ -167,7 +167,7 @@ plt.subplots_adjust(bottom=0.2)
 plt.title("Distribution of image caption lengths")
 plt.ylabel("Frequency")
 plt.xlabel("Caption length")
-plt.bar(list(cl.keys()), cl.values(), color='b')
+plt.bar(list(cl.keys()), cl.values())
 plt.show()
 
 
