@@ -145,10 +145,10 @@ We limit the vocabulary to words only occurring more than 10 times. By doing thi
 
 Statistical summary of the caption lengths of the training set:
 
-*Standard deviation*:  3.454292274111494
-*Mean word frequency*:  10.775135936727633
-*Min word frequency*:  1
-*Max word frequency*:  34
+*Standard deviation*:  3.45
+*Mean word frequency*:  10.77
+*Min word frequency*:  1  
+*Max word frequency*:  34  
 
 Below is a bar plot of the caption lengths.
 
