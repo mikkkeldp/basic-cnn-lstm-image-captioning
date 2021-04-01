@@ -6,7 +6,7 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 from pickle import load, dump
 from numpy import array
-
+print(sns.__version__)
 
 PATH = "dataset/Flickr8k_text/"
 with open(PATH+"Flickr8k.token.txt") as f:
@@ -138,5 +138,41 @@ for value in word_freq.values():
         n += 1
 print("New vocab: ", n)
 
-print(word_freq)
+# print(word_freq)
 # remove words occuring less than 10 times, as well as stop words (a, the, etc)
+
+
+caption_lengths = []
+for key in descriptions.keys():
+    # caption_lengths[i] = len(descriptions[i])
+    for caps in descriptions[key]:
+        caps = caps.replace("startseq ", "")
+        caps = caps.replace(" endseq", "")
+        caps = caps.replace(" a ", " ")
+        caps = caps.split(" ")
+        caption_lengths.append(len(caps))
+
+cl = {}
+for i in caption_lengths:
+    if i not in cl.keys():
+        cl[i] = 1
+    else:
+        cl[i] += 1
+
+
+x = np.arange(len(cl.keys()))
+y = cl.values()
+
+plt.subplots_adjust(bottom=0.2)
+plt.title("Distribution of image caption lengths")
+plt.ylabel("Frequency")
+plt.xlabel("Caption length")
+plt.bar(list(cl.keys()), cl.values(), color='b')
+plt.show()
+
+
+freq_list = caption_lengths
+print("std: ", np.std(freq_list))
+print("mean: ", np.mean(freq_list))
+print("min: ", np.min(freq_list))
+print("max: ", np.max(freq_list))
