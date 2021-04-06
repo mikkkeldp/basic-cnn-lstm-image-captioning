@@ -9,7 +9,6 @@
     - Added option to use pre-trained models EfficientNetB7 and InceptionV3 for feature extraction.
     - Added option to use injection model architecture instead of merge model architecture.
     - Performance of new model variations are to be added after training is completed. 
-
 - **23/03/2021**
     - Added performances of model variations.
 - **24/03/2021**
@@ -271,8 +270,8 @@ Below are the BLEU-1,2,3,4 Metrics compared to other methods achieved on the Fli
 | Merge-EfficientNetB7-Glove-RV                                 | 60.38  | 36.96  | 23.27  | 14.17   |
 | Merge-VGG-Glove-RV                                            | 46.60 | 22.36  | 12.34  | 6.63   |
 | Merge-EfficientNetB7-Glove-RV-BS3                             | **60.69** | **37.74**  | 25.15  | **16.43**  |
-Merge-EfficientNetB7-Glove-RV-BS5                             | tbd | tbd  | tbd  | tbd  |
-
+Merge-EfficientNetB7-Glove-RV-BS5                             | 58.35 | 36.71  | 24.34  | 15.85 |
+Merge-EfficientNetB7-Glove-RV-BS10                             | 55.73 | 34.57  | 22.99  | 15.00  |
 
 ### Qualitative evaluation
 
