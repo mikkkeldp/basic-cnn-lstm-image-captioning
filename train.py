@@ -2,6 +2,7 @@ import numpy as np
 from keras.callbacks import ModelCheckpoint
 import os
 from utils import *
+from model import *
 import tensorflow as tf
 
 #initialize GPU for training
@@ -10,15 +11,14 @@ tf.config.experimental.set_memory_growth(gpus[0], True)
 
 
 #model parameters
-reduced_vocab = True
+reduced_vocab = False
 model_type = "merge" 
 feature_model = "efficientnet"
 glove = False
 progressive_loading = False
 
 #training parameters
-epochs = 6
-
+epochs = 20
 
 ## loading data
 # train and development (test) dataset have been prediefined in the Flickr_8k.trainImages.txt and Flickr_8k.devImages.txt files
@@ -102,7 +102,8 @@ else:
 	X1test, X2test, ytest = create_sequences(tokenizer, max_length, test_descriptions, test_features, vocab_size)
 
 #define model
-model = define_model(vocab_size, max_length, model_type=model_type,feature_model=feature_model,glove=glove, embedding_matrix=embedding_matrix)
+model = BasicModel(vocab_size, max_length, model_type=model_type,feature_model=feature_model,glove=glove, embedding_matrix=embedding_matrix)
+# model = AlternativeModel(vocab_size, max_length,feature_model=feature_model,glove=glove, embedding_matrix=embedding_matrix)
 
 #define naming of saved .h5 file
 if glove:
@@ -115,7 +116,7 @@ if reduced_vocab:
 	model_name += "RV-"
 
 if progressive_loading:
-	batch_size = vocab_size
+	batch_size = 64
 	steps = len(train_descriptions)
 	for i in range(epochs):
 		# create the data generator
@@ -123,11 +124,11 @@ if progressive_loading:
 		# fit for one epoch
 		model.fit_generator(generator, epochs=1, steps_per_epoch=steps, verbose=1)
 		# save model
-		model.save(str(model_name)+"-" + str(i) + '.h5')
+		model.save("trained_models/PL-" + str(model_name)+"-" + str(i) + '.h5')
 else:		
 	# define checkpoint callback
-	filepath = model_name + 'model-ep{epoch:03d}-loss{loss:.3f}-val_loss{val_loss:.3f}.h5'
+	filepath = "trained_models/" + model_name + 'model-ep{epoch:03d}-loss{loss:.3f}-val_loss{val_loss:.3f}.h5'
 	checkpoint = ModelCheckpoint(filepath, monitor='val_loss', verbose=1, save_best_only=True, mode='min')
 
 	# fit model
-	model.fit([X1train, X2train], ytrain, epochs=epochs, verbose=2, callbacks=[checkpoint], validation_data=([X1test, X2test], ytest)) 
+	model.fit([X1train, X2train], ytrain, epochs=epochs, verbose=2, callbacks=[checkpoint], validation_data=([X1test, X2test], ytest),use_multiprocessing=True, workers=8) 

@@ -29,8 +29,8 @@ def evaluate_model(model, descriptions, photos, tokenizer, max_length):
 
 #model parameters
 feature_model = "efficientnet"
-beam = True
-reduce_v = True
+beam = False
+reduce_v = False
 
 # prepare train set
 filename = 'dataset/Flickr8k_text/Flickr_8k.trainImages.txt'
@@ -67,7 +67,7 @@ test_features = load_photo_features(feature_model+'.pkl', test)
 print('Photos: test=%d' % len(test_features))
 
 # load the model
-filename = 'merge-efficientnet-glove-RV-model-ep003-loss3.047-val_loss3.335.h5' #insert your best model here
+filename = 'trained_models/' + 'merge-efficientnet-model-ep001-loss4.368-val_loss3.947.h5' #insert your best model here
 model = load_model(filename)
 # evaluate model
 evaluate_model(model, test_descriptions, test_features, tokenizer, max_length)

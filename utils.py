@@ -12,7 +12,6 @@ import string
 from os import listdir
 from tqdm import tqdm
 
-import keras
 from keras.preprocessing.text import Tokenizer
 from keras.preprocessing.sequence import pad_sequences
 from keras.utils import to_categorical
@@ -430,71 +429,3 @@ def int_to_word(integer, tokenizer):
 
 
 
-# define the captioning model
-def define_model(vocab_size, max_length, model_type="merge",feature_model="vgg",glove=False, embedding_matrix=None):
-	
-	if feature_model =="inception":
-		inputs1 = Input(shape=(2048,))
-	elif feature_model == "vgg":
-		inputs1 = Input(shape=(4096,))
-	else: #efficientnet
-		inputs1 = Input(shape=(2560,))
-
-	if glove:
-		dim = 200
-	else:
-		dim = 256
-
-	if model_type == "merge":
-		#merge model
-
-		# feature extractor model
-		fe1 = Dropout(0.5)(inputs1)
-		# b1 = BatchNormalization()(fe1)
-		fe2 = Dense(256, activation='relu')(fe1)
-
-		# sequence model
-		inputs2 = Input(shape=(max_length,))
-		se1 = Embedding(vocab_size, dim, mask_zero=True)(inputs2)
-		# b2 = BatchNormalization()(se1)
-		se2 = Dropout(0.1)(se1)
-		se3 = LSTM(256)(se2)
-
-		# decoder model
-		decoder1 = add([fe2, se3])
-		decoder2 = Dense(256, activation='relu')(decoder1)
-		outputs = Dense(vocab_size, activation='softmax')(decoder2)
-
-		# tie it together [image, seq] [word]
-	else:
-		#inject model
-
-		fe1 = Dropout(0.01)(inputs1)
-		b1 = BatchNormalization()(fe1)
-		fe2 = Dense(256, activation='relu')(b1)
-
-		inputs2 = Input(shape=(max_length,))
-		se1 = Embedding(vocab_size, dim, mask_zero=True)(inputs2)
-		b2 = BatchNormalization()(se1)
-		se2 = Dropout(0.5)(b2)
-
-		input = add([fe2, se2])
-		encoder = LSTM(256)(input)
-		decoder = Dense(256, activation='relu')(encoder)
-		outputs = Dense(vocab_size, activation='softmax')(decoder)
-
-	model = Model(inputs=[inputs1, inputs2], outputs=outputs)
-
-	if glove:
-		model.layers[2].set_weights([embedding_matrix])
-		model.layers[2].trainable = False
-
-	#set learning rate	(not currently in use)
-	opt = keras.optimizers.Adam(learning_rate=0.01)
-
-	model.compile(loss='categorical_crossentropy', optimizer="adam")
-
-	# summarize model
-	print(model.summary())
-	plot_model(model, to_file='model.png', show_shapes=True)
-	return model

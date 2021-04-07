@@ -1,4 +1,3 @@
-
 import re
 import pandas as pd
 import numpy as np
@@ -6,7 +5,7 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 from pickle import load, dump
 from numpy import array
-print(sns.__version__)
+
 
 PATH = "dataset/Flickr8k_text/"
 with open(PATH+"Flickr8k.token.txt") as f:
