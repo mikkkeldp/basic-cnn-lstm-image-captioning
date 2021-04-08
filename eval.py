@@ -28,7 +28,7 @@ def evaluate_model(model, descriptions, photos, tokenizer, max_length):
 	print('BLEU-4: %f' % corpus_bleu(actual, predicted, weights=(0.25, 0.25, 0.25, 0.25)))
 
 #model parameters
-feature_model = "efficientnet"
+feature_model = "resnet"
 beam = False
 reduce_v = False
 
@@ -67,7 +67,7 @@ test_features = load_photo_features(feature_model+'.pkl', test)
 print('Photos: test=%d' % len(test_features))
 
 # load the model
-filename = 'trained_models/' + 'merge-efficientnet-model-ep001-loss4.368-val_loss3.947.h5' #insert your best model here
+filename = 'trained_models/' + 'merge-resnet-model-ep004-loss3.428-val_loss3.800.h5' #insert your best model here
 model = load_model(filename)
 # evaluate model
 evaluate_model(model, test_descriptions, test_features, tokenizer, max_length)

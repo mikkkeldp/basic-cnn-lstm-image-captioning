@@ -6,8 +6,8 @@ dataset_dir = 'dataset/Flickr8k_Dataset'
 descriptions_tokens_dir = 'dataset/Flickr8k_text/Flickr8k.token.txt'
 
 # set parameters for data preperation
-feature_model = "inception" 	# set pre-trained CNN for feature extraction
-reduce_vocab = True 	# reduced vocab toggle
+feature_model = "vgg" 	# set pre-trained CNN for feature extraction
+reduce_vocab = False 	# reduced vocab toggle
 
 #extract feature vectors
 features = extract_features(dataset_dir, model=feature_model)

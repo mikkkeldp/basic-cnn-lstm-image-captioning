@@ -31,6 +31,8 @@ from keras.applications.vgg16 import VGG16
 from keras.applications.inception_v3 import InceptionV3
 from keras.applications.vgg16 import preprocess_input as preprocess_input_vgg
 from keras.applications.inception_v3 import preprocess_input as preprocess_input_inc
+from keras.applications.resnet50 import ResNet50
+from keras.applications.resnet50 import preprocess_input as preprocess_input_res
 from numpy import argmax
 
 # only use if you have tensorflow nightly installed
@@ -62,8 +64,11 @@ def extract_features(directory,model="vgg"):
 		model = InceptionV3(weights='imagenet')
 		model = Model(model.input, model.layers[-2].output)
 	
-	else:
+	elif model == "efficientnet":
 		model = EfficientNetB7(weights='imagenet')
+		model = Model(model.input, model.layers[-2].output)
+	else:
+		model = ResNet50(weights='imagenet')
 		model = Model(model.input, model.layers[-2].output)
 
 	# extract features from each photo
@@ -85,8 +90,11 @@ def extract_features(directory,model="vgg"):
 			image = preprocess_input_vgg(image)
 		elif feature_model == "inception":
 			image = preprocess_input_inc(image)	
+		elif feature_model == "resnet":
+			image = preprocess_input_res(image)		
 		else:
 			image = preprocess_input_eff(image)	
+
 		# get features
 		feature = model.predict(image, verbose=0)
 		# get image id
@@ -427,5 +435,11 @@ def int_to_word(integer, tokenizer):
 			return word
 	return None
 
+# -------------- NEW PREDICTION UTILS --------------
 
+#strip start and end tokens 
 
+def strip_tokens(input):
+	output = input.replace("startseq ", "")
+	output = output.replace(" endseq", "")
+	return output

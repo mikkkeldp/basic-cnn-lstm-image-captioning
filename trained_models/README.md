@@ -1,0 +1,1 @@
+Trained model checkpoints will be saved here (one per epoch). The model is only saved if the validation loss is less than the previous epoch. 

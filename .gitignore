@@ -5,7 +5,6 @@ dataset
 .vscode/
 eval2.py
 train2.py
-trained_models
 *.jpg
 *.json
 .env

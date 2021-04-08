@@ -13,7 +13,7 @@ tf.config.experimental.set_memory_growth(gpus[0], True)
 #model parameters
 reduced_vocab = False
 model_type = "merge" 
-feature_model = "efficientnet"
+feature_model = "vgg"
 glove = False
 progressive_loading = False
 
@@ -102,8 +102,9 @@ else:
 	X1test, X2test, ytest = create_sequences(tokenizer, max_length, test_descriptions, test_features, vocab_size)
 
 #define model
-model = BasicModel(vocab_size, max_length, model_type=model_type,feature_model=feature_model,glove=glove, embedding_matrix=embedding_matrix)
+# model = BasicModel(vocab_size, max_length, model_type=model_type,feature_model=feature_model,glove=glove, embedding_matrix=embedding_matrix)
 # model = AlternativeModel(vocab_size, max_length,feature_model=feature_model,glove=glove, embedding_matrix=embedding_matrix)
+model = ComplexModel(vocab_size, max_length,feature_model="vgg",glove=glove, embedding_matrix=embedding_matrix)
 
 #define naming of saved .h5 file
 if glove:
