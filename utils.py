@@ -11,7 +11,7 @@ from numpy import array
 import string
 from os import listdir
 from tqdm import tqdm
-
+import numpy as np
 from keras.preprocessing.text import Tokenizer
 from keras.preprocessing.sequence import pad_sequences
 from keras.utils import to_categorical

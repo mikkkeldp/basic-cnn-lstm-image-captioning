@@ -14,7 +14,7 @@ def evaluate_model(model, descriptions, photos, tokenizer, max_length):
 	for key, desc_list in tqdm(descriptions.items()):
 		# generate description
 		if beam:
-			yhat = generate_desc_beam_search(model, tokenizer, photos[key], max_length,5)
+			yhat = generate_desc_beam_search(model, tokenizer, photos[key], max_length,beam_k)
 		else:
 			yhat = generate_desc(model, tokenizer, photos[key], max_length)
 		# store actual and predicted
@@ -28,9 +28,13 @@ def evaluate_model(model, descriptions, photos, tokenizer, max_length):
 	print('BLEU-4: %f' % corpus_bleu(actual, predicted, weights=(0.25, 0.25, 0.25, 0.25)))
 
 #model parameters
-feature_model = "resnet"
+feature_model = "efficientnet"
+reduce_v = True
 beam = False
-reduce_v = False
+beam_k = 5
+
+#insert your best model here
+model_file_name = 'merge-efficientnet-glove-RV-model-ep002-loss3.057-val_loss3.323.h5'
 
 # prepare train set
 filename = 'dataset/Flickr8k_text/Flickr_8k.trainImages.txt'
@@ -66,8 +70,8 @@ print('Longest Description Length: %d' % max_length)
 test_features = load_photo_features(feature_model+'.pkl', test)
 print('Photos: test=%d' % len(test_features))
 
-# load the model
-filename = 'trained_models/' + 'merge-resnet-model-ep004-loss3.428-val_loss3.800.h5' #insert your best model here
-model = load_model(filename)
+# load the model 
+
+model = load_model('trained_models/' + model_file_name)
 # evaluate model
 evaluate_model(model, test_descriptions, test_features, tokenizer, max_length)

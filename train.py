@@ -11,10 +11,10 @@ tf.config.experimental.set_memory_growth(gpus[0], True)
 
 
 #model parameters
-reduced_vocab = False
+reduced_vocab = True
 model_type = "merge" 
-feature_model = "vgg"
-glove = False
+feature_model = "efficientnet"
+glove = True
 progressive_loading = False
 
 #training parameters
@@ -60,7 +60,6 @@ if glove:
 	i = 0
 	embedding_matrix = np.zeros((vocab_size, embedding_dim))
 	for word in tokenizer.word_index:
-		print(word)
 		embedding_vector = embeddings_index.get(word)
 		if embedding_vector is not None:
 			embedding_matrix[i] = embedding_vector	
@@ -102,9 +101,9 @@ else:
 	X1test, X2test, ytest = create_sequences(tokenizer, max_length, test_descriptions, test_features, vocab_size)
 
 #define model
-# model = BasicModel(vocab_size, max_length, model_type=model_type,feature_model=feature_model,glove=glove, embedding_matrix=embedding_matrix)
+model = BasicModel(vocab_size, max_length, model_type=model_type,feature_model=feature_model,glove=glove, embedding_matrix=embedding_matrix)
 # model = AlternativeModel(vocab_size, max_length,feature_model=feature_model,glove=glove, embedding_matrix=embedding_matrix)
-model = ComplexModel(vocab_size, max_length,feature_model="vgg",glove=glove, embedding_matrix=embedding_matrix)
+# model = ComplexModel(vocab_size, max_length,feature_model=feature_model,glove=glove, embedding_matrix=embedding_matrix)
 
 #define naming of saved .h5 file
 if glove:
@@ -132,4 +131,4 @@ else:
 	checkpoint = ModelCheckpoint(filepath, monitor='val_loss', verbose=1, save_best_only=True, mode='min')
 
 	# fit model
-	model.fit([X1train, X2train], ytrain, epochs=epochs, verbose=2, callbacks=[checkpoint], validation_data=([X1test, X2test], ytest),use_multiprocessing=True, workers=8) 
+	model.fit([X1train, X2train], ytrain, epochs=epochs, verbose=2, callbacks=[checkpoint], validation_data=([X1test, X2test], ytest), use_multiprocessing=True, workers=8) 
