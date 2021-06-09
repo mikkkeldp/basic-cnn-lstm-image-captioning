@@ -2,8 +2,6 @@
 
 *Windows users - use cmd instead of bash. Windows virtual machine does not support GPU training on tensorflow*  
 
-<!-- Model is based on [How to Develop a Deep Learning Photo Caption Generator from Scratch](https://machinelearningmastery.com/develop-a-deep-learning-caption-generation-model-in-python/). -->
-
 ## Updates
 - **18/03/2021**
     - Added option to use pre-trained models EfficientNetB7 and InceptionV3 for feature extraction
@@ -224,11 +222,11 @@ Both the feature extractor and sequence processor output a fixed-length vector. 
 
 The Decoder model merges the vectors from both input models using an addition operation. This is then fed to a Dense 256 neuron layer and then to a final output Dense layer that makes a softmax prediction over the entire output vocabulary for the next word in the sequence.
 
-### <a name="old_model"></a> Model Visualized 
+<!-- ### <a name="old_model"></a> Model Visualized 
 *The most basic merge model without Glove*
 <p align="center">
 <img src="https://machinelearningmastery.com/wp-content/uploads/2017/09/Plot-of-the-Caption-Generation-Deep-Learning-Model.png" width="550" height="400" />
-</p>
+</p> -->
 
 ### Glove Embeddings
 Word vectors map words to a vector space, where similar words are clustered together and different words are separated. We will be using Glove over Word2Vec, since GloVe does not just rely on the local context of words but it incorporates global word co-occurrence to obtain word vectors.
@@ -240,7 +238,6 @@ This mapping will be done in a separate layer after the input layer called the e
 The embedding layer is where the partial caption of max length 34, is fed into, and the words are mapped to a 200-dimension Glove embedding. Before training we freeze the embedding layer since we do not want to retrain the weights in our embedding layer.
 
 Download the pre-trained word vector used in this project from [here](https://nlp.stanford.edu/projects/glove/).
-
 
 ## Model Evaluation
 
